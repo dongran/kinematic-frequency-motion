@@ -11,7 +11,7 @@ This repository accompanies **SIGGRAPH Asia 2026** and provides:
 Paper figures and results are on the project page:
 [kinematic-frequency-motion](https://www.dr-lab.org/projects/kinematic-frequency-motion/).
 
-This repository runs the transfer and writes joint positions. It does not include SMPL mesh or Blender rendering. The training launchers and the FineMotion split are also not in this repository. The sections below record how the released networks were trained, and where to put the weights.
+This repository runs the transfer and writes joint positions. It does not include SMPL mesh or Blender rendering. Training follows the four scripts below. The FineMotion clips themselves are not in this repository.
 
 ### Weights
 
@@ -40,28 +40,56 @@ curl -L -o motionclip_checkpoint/motionclip.pth.tar \
   https://www.dr-lab.org/projects/kinematic-frequency-motion/releases/checkpoints/motionclip_checkpoint/motionclip.pth.tar
 ```
 
-### How the networks were trained
+### Training
 
-Training has four frozen models and one trained denoiser. The diffusion code is the `mld` package, and the IMF extractor is the `imf_extractor` package. The released config is `configs/dual_style_hht.yaml`; the module files it loads are in `configs/dual_style`.
+The released weights were trained in this order, on FineMotion motions stored as HumanML-263 features at 20 Hz. `configs/assets_finemotion.yaml` points at that set. One GPU is enough for each script. The diffusion code is `mld`. The IMF extractor code is `imf_extractor`.
 
-1. **Motion VAE.** An encoder–decoder transformer on raw HumanML-263 features: 9 layers, 4 heads, feed-forward size 1024, latent shape 7 × 256. It was trained on FineMotion at 20 Hz and stopped at epoch 599. Diffusion training does not update it.
+#### Step 1: Motion VAE
 
-2. **IMF extractor.** A frozen teacher that splits a motion into three intrinsic mode functions at 20 Hz. Bands 0 and 1 are the fine style. Band 2 is the coarse band. The trajectory branch reads degrees of freedom 66–69. The diffusion model was trained against this exact checkpoint. A later extractor is not a substitute.
+An encoder–decoder transformer: 9 layers, 4 heads, feed-forward size 1024, latent shape 7 × 256. AdamW, learning rate `1e-4`, batch size 128. The config runs for 1000 epochs. The released file is epoch 599, and it stays frozen after this step.
 
-3. **Contact timing and MotionCLIP.** Both stay frozen. Contact timing is a content-side condition. MotionCLIP, with CLIP ViT-B/32, embeds the style motion into the coarse style token. The denoiser still has its own contact-timing encoder, and those weights are inside `dual_style_denoiser.ckpt`: hidden size 128, output size 512, 2 blocks, kernel size 5.
+```bash
+bash scripts/train_motion_vae.sh
+```
 
-4. **Dual-style denoiser.** A transformer encoder, also 9 layers, 4 heads, and feed-forward size 1024, with dropout 0.1 and GELU. The fine-style condition is injected from layer 6. It was trained from scratch with AdamW at `1e-4` for 2000 epochs, and the released file is epoch 1999. The noise schedule is DDPM with 1000 training steps, `scaled_linear` betas from `0.00085` to `0.012`. Each condition is dropped with probability 0.25. The diffusion losses recorded in the config are:
+#### Step 2: IMF extractor
 
-   - reconstruction, generation, and cross-reconstruction: `1.0`
-   - IMF reconstruction: `0.1`
-   - HHT amplitude and HHT frequency: `0.02` each
-   - global frequency and branch frequency: `0.01` and `0.1`
-   - KL: `1e-4`
-   - latent: `1e-5`
+The extractor writes three intrinsic mode functions at 20 Hz over 69 degrees of freedom: root rotation, the 63 body rotations, and root translation. Bands 0 and 1 are the fine style. Band 2 is the coarse band. The trajectory branch of the denoiser reads degrees of freedom 66–69.
 
-The training motions are FineMotion clips stored as HumanML-263 features, normalized with `data/stats/Mean.npy` and `data/stats/Std.npy`. Sampling is separate from those loss weights. Inference uses DDIM with 50 steps. The paper protocol is global scale **2.5** and fine scale **1.5**.
+The released teacher is not a from-scratch run. It continues a pose-69 extractor and updates only the body-63 decoders and refiners, for 8 epochs at learning rate `1e-6` and batch size 128. Put that pose-69 checkpoint at `checkpoints/imf_pose69_init.pt`. The file used by the diffusion model is epoch 6 of this finetune. Do not replace it with a later extractor.
 
-More notes are in `docs/TRAINING.md`.
+```bash
+bash scripts/train_imf_extractor.sh
+```
+
+The loss weights are in `configs/imf_pose69_teacher.yaml`: decomposition `1.0`, EMD `0.5`, Hilbert amplitude and frequency `0.5` each inside the Hilbert term, plus a small body-63 temporal penalty.
+
+#### Step 3: Contact-timing predictor
+
+A small temporal network on hip contact, hidden size 64, 4 blocks, kernel size 5. It trains for 40 epochs, batch size 64, AdamW at `1e-4`. Each FineMotion clip needs a contact label `.npz` under the `DATA.LABEL_ROOT` path in `configs/contact_timing_finemotion.yaml`. The released file is the best checkpoint of this run. It stays frozen. MotionCLIP is also frozen; CLIP ViT-B/32 supplies its text and motion embedding.
+
+```bash
+bash scripts/train_contact_timing.sh
+```
+
+#### Step 4: Dual-style denoiser
+
+Train this network from scratch. The motion VAE, the IMF extractor, the contact-timing predictor, and MotionCLIP stay frozen. The denoiser is a transformer encoder with the same 9 layers, 4 heads, and feed-forward size 1024. Fine style is injected from layer 6. The denoiser also learns its own contact-timing encoder, hidden size 128, output size 512, 2 blocks, kernel size 5. Those weights are inside `dual_style_denoiser.ckpt`.
+
+AdamW, learning rate `1e-4`, batch size 128, 2000 epochs. The released file is epoch 1999. Each condition is dropped with probability 0.25. The diffusion losses in `configs/dual_style_finemotion_scratch.yaml` are:
+
+- reconstruction, generation, and cross-reconstruction: `1.0`
+- IMF reconstruction: `0.1`
+- HHT amplitude and HHT frequency: `0.02` each
+- global frequency and branch frequency: `0.01` and `0.1`
+- KL: `1e-4`
+- latent: `1e-5`
+
+```bash
+bash scripts/train_dual_style.sh
+```
+
+Normalization uses `data/stats/Mean.npy` and `data/stats/Std.npy`. Sampling is separate from those loss weights. Inference uses DDIM with 50 steps. The paper protocol is global scale **2.5** and fine scale **1.5**.
 
 ### Run a transfer
 
@@ -92,6 +120,16 @@ Use a raw HumanML3D feature, shape `[T, 263]`, 20 Hz. Do not normalize it yourse
 SMPL motion (`poses` and `trans` in an `.npz`) is converted by the [HumanML3D](https://github.com/EricGuo5513/HumanML3D) notebooks `raw_pose_processing.ipynb` and then `motion_representation.ipynb`. Keep the `new_joint_vecs` array.
 
 A motion-capture BVH file is not read here. Retarget it to SMPL with [tempo-changing-music2motion](https://github.com/dongran/tempo-changing-music2motion), then run the two HumanML3D notebooks.
+
+### Generated motions
+
+These are stick figures written by the inference code. The first is a turning walk with a dance-kick style, coarse scale 2.5 and fine scale 10. The stair pair keeps one spatial scale, so the step up and the step down stay visible when the fine scale changes from 0 to 3. The coarse scale is 2.5 in both stair clips.
+
+![Turning walk with dance-kick style](asset/turning_walk.gif)
+
+![Stair walk, fine scale 0](asset/stair_fine0.gif)
+
+![Stair walk, fine scale 3](asset/stair_fine3.gif)
 
 ### Citation
 

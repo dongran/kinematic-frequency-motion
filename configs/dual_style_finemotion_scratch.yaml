@@ -1,0 +1,124 @@
+NAME: finemotion_263_v4__memd_pose69_aligned_HF__dualStyle_lowAsCoarse_trajFineHighMid_contactTimingContentSoft_teacher_finemotion_general_scratch
+DEBUG: false
+ACCELERATOR: gpu
+DEVICE:
+- 0
+TRAIN:
+  STAGE: diffusion
+  DATASETS:
+  - humanml3d
+  NUM_WORKERS: 4
+  BATCH_SIZE: 128
+  END_EPOCH: 2000
+  RESUME: ''
+  PRETRAINED_VAE: checkpoints/motion_vae.ckpt
+  OPTIM:
+    TYPE: AdamW
+    LR: 0.0001
+  ABLATION:
+    SKIP_CONNECT: true
+    PE_TYPE: mld
+    DIFF_PE_TYPE: mld
+  PRETRAINED: ''
+EVAL:
+  DATASETS:
+  - humanml3d
+  BATCH_SIZE: 32
+  SPLIT: test
+TEST:
+  CHECKPOINTS: checkpoints/denoiser_checkpoint/denoiser.ckpt
+  DATASETS:
+  - humanml3d
+  SPLIT: test
+  BATCH_SIZE: 128
+  MEAN: false
+  NUM_SAMPLES: 1
+  FACT: 1
+DATASET:
+  JOINT_TYPE: humanml3d
+DATA:
+  USE_OFFLINE_IMF_GT: false
+  FREEZE_IMF_EXTRACTOR: true
+  HHT_TARGET_MODE: online
+  IMF_CHECKPOINT: checkpoints/imf_extractor.pt
+  IMF_LATENT_DIM: 512
+  IMF_COUNT: 3
+  IMF_FRAME_RATE: 20.0
+  IMF_FINE_BANDS:
+  - 0
+  - 1
+  IMF_COARSE_BANDS:
+  - 2
+  IMF_TRANS_DOF_SLICE:
+  - 66
+  - 69
+METRIC:
+  TYPE:
+  - TemosMetric
+  - TM2TMetrics
+LOSS:
+  TYPE: mld
+  LAMBDA_LATENT: 1.0e-05
+  LAMBDA_KL: 0.0001
+  LAMBDA_REC: 1.0
+  LAMBDA_GEN: 1.0
+  LAMBDA_CROSS: 1.0
+  LAMBDA_CYCLE: 0.0
+  LAMBDA_PRIOR: 0.0
+  DIST_SYNC_ON_STEP: false
+  LAMBDA_IMF: 0.1
+  LAMBDA_HHT_AMP: 0.02
+  LAMBDA_HHT_FREQ: 0.02
+  LAMBDA_FREQ_GLOBAL: 0.01
+  LAMBDA_FREQ_BRANCH: 0.1
+model:
+  target: dual_style
+  vae: true
+  model_type: mld_hht_dual_style
+  condition: text
+  latent_dim:
+  - 7
+  - 256
+  ff_size: 1024
+  num_layers: 9
+  num_head: 4
+  droupout: 0.1
+  activation: gelu
+  guidance_scale: 5
+  guidance_uncondp: 0.25
+  guidance_fine_scale: 1.0
+  guidance_uncondp_fine: 0.25
+  fine_inject_start_layer: 6
+  traj_imf_bands:
+  - 0
+  - 1
+  traj_imf_scale: 1.0
+  guidance_traj_scale: 1.0
+  guidance_uncondp_traj: 0.25
+  guidance_zero_uncond_traj: true
+  contact_timing_ckpt: checkpoints/contact_timing.pt
+  contact_timing_source: content
+  contact_timing_scale: 1.0
+  guidance_contact_timing_scale: 1.0
+  guidance_uncondp_contact_timing: 0.25
+  guidance_zero_uncond_contact_timing: true
+  contact_timing_encoder_hidden_dim: 128
+  contact_timing_encoder_output_dim: 512
+  contact_timing_encoder_num_blocks: 2
+  contact_timing_encoder_kernel_size: 5
+  contact_timing_encoder_dropout: 0.1
+  contact_timing_route: trajectory
+  phase_timing_enabled: false
+  contact_timing_phase_num_harmonics: 2
+  contact_timing_phase_hidden_dim: 128
+  contact_timing_phase_output_dim: 512
+  contact_timing_branch_fusion_hidden_dim: 256
+LOGGER:
+  SACE_CHECKPOINT_EPOCH: 100
+  LOG_EVERY_STEPS: 1
+  VAL_EVERY_STEPS: 100
+  TENSORBOARD: true
+  WANDB:
+    PROJECT: null
+    OFFLINE: false
+    RESUME_ID: null

@@ -1,0 +1,16 @@
+FOLDER: './experiments' # Experiment files saving path
+
+TEST:
+  FOLDER: './results' # Testing files saving path
+
+DATASET:
+  SMPL_PATH: 'third_party/smpl'
+  TRANSFORM_PATH: 'third_party/transforms/'
+  WORD_VERTILIZER_PATH: 'third_party/t2m/glove/'
+  HUMANML3D:
+    ROOT: './datasets/FineMotion/humanml3d_20hz_for_Tranning263/finemotion_263_v4'
+    SPLIT_ROOT: './datasets/FineMotion/humanml3d_20hz_for_Tranning263/finemotion_263_v4/splits_pose69_aligned_HF_ok'
+
+model:
+  clip_path: 'third_party/clip-vit-large-patch14'
+  t2m_path: 'third_party/t2m/t2m'

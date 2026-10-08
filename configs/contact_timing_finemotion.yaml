@@ -1,0 +1,45 @@
+NAME: finemotion_pose69hf_contact_timing_v1
+SEED: 1234
+
+OUTPUT:
+  ROOT: ./outputs/contact_timing_predictor
+
+DATA:
+  LABEL_ROOT: ./outputs/contact_labels_finemotion_pose69hf_v2
+  SPLIT_ROOT: ./datasets/FineMotion/humanml3d_20hz_for_Tranning263/finemotion_263_v4/splits_pose69_aligned_HF_ok
+  TRAIN_SPLIT: train.txt
+  VAL_SPLIT: val.txt
+  TEST_SPLIT: test.txt
+  INPUT_FEATURES: [hip]
+  WINDOW_SIZE: 120
+  TRAIN_SAMPLING: random
+  EVAL_SAMPLING: center
+  MAX_TRAIN_ITEMS: 0
+  MAX_VAL_ITEMS: 0
+  MAX_TEST_ITEMS: 0
+  STRICT_SPLITS: true
+
+MODEL:
+  HIDDEN_DIM: 64
+  OUTPUT_DIM: 2
+  NUM_BLOCKS: 4
+  KERNEL_SIZE: 5
+  DROPOUT: 0.1
+
+TRAIN:
+  BATCH_SIZE: 64
+  EVAL_BATCH_SIZE: 128
+  NUM_WORKERS: 8
+  EPOCHS: 40
+  LR: 1.0e-4
+  WEIGHT_DECAY: 1.0e-2
+  LR_SCHEDULER: cosine
+  GRAD_CLIP_NORM: 1.0
+  SAVE_EVERY_EPOCHS: 5
+  USE_TENSORBOARD: true
+  POS_WEIGHT: [1.0, 1.0]
+  LAMBDA_TEMPORAL_TV: 0.02
+  LAMBDA_TEMPORAL_ACC: 0.01
+
+EVAL:
+  EVENT_TOLERANCE_FRAMES: 2

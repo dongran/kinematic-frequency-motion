@@ -1,0 +1,110 @@
+experiment:
+  name: imf_pose69_temprecover_seed1500_scale032_src0008_re08_lru1
+  seed: 42
+dataset:
+  root: datasets/FineMotion/humanml3d_20hz_for_Tranning263/finemotion_263_v4
+  split_dir: splits_pose69_aligned_HF_ok
+  split: train
+  val_split: val
+  batch_size: 128
+  val_batch_size: 64
+  num_workers: 8
+  max_motion_length: 196
+  min_motion_length: 40
+  unit_length: 4
+  imf_dir: datasets/FineMotion/humanml3d_20hz_for_Tranning263/finemotion_263_v4_memd_pose69/aligned-HF/imfs3
+  stats_dir: stats_pose69_aligned_HF
+model:
+  variant: body63_refine
+  shared_backbone: true
+  nfeats: 263
+  imf_count: 3
+  imf_dof: 69
+  latent_dim: 512
+  pe_dim: 0
+  pe_mode: time_concat
+  frame_rate: 20.0
+  output_groups:
+  - name: root_rot3
+    dof: 3
+  - name: body63
+    dof: 63
+  - name: trans3
+    dof: 3
+  cnn:
+    band_adapter_resblocks: 2
+  transformer:
+    enabled: false
+    num_layers: 1
+    num_heads: 4
+    ff_dim: 512
+    dropout: 0.1
+  body_refine:
+    group_name: body63
+    hidden_channels: 96
+    kernel_size: 5
+    norm: bn
+    dropout: 0.1
+    scale: 0.0325
+loss:
+  lambda_decomp: 1.0
+  lambda_emd: 0.5
+  lambda_ht: 0.5
+  alpha_ht_amp: 0.5
+  alpha_ht_freq: 0.5
+  beta_emd_mean: 0.5
+  beta_emd_ext: 0.5
+  group_loss:
+    enabled: true
+    mode: full_plus_aux
+    aux_weight: 0.05
+    weight_strategy: by_dof
+  temporal_aux:
+    enabled: true
+    groups:
+    - body63
+    lambda_delta: 0.0015
+    lambda_accel: 0.0005
+    lambda_ht_phase: 0.0
+    normalize_by_target_rms: true
+    phase_amp_weighted: true
+    phase_weight_clip: 2.5
+    schedule:
+      delta:
+        start_epoch: 2
+        end_epoch: 8
+        start_scale: 0.0
+        end_scale: 1.0
+      accel:
+        start_epoch: 4
+        end_epoch: 10
+        start_scale: 0.0
+        end_scale: 1.0
+train:
+  epochs: 8
+  lr: 1.0e-06
+  weight_decay: 0.0
+  ckpt_interval: 2
+  out_dir: imf_extractor/outputs
+  init_checkpoint: checkpoints/imf_pose69_init.pt
+  init_checkpoint_strict: true
+  trainable_modules:
+  - group_decoders.0.body63
+  - group_decoders.1.body63
+  - group_decoders.2.body63
+  - body_refiners.0
+  - body_refiners.1
+  - body_refiners.2
+  freeze_modules_eval: true
+  scheduler:
+    type: reduce_on_plateau
+    factor: 0.5
+    patience: 3
+    threshold: 0.0001
+    threshold_mode: rel
+    min_lr: 2.0e-07
+  early_stopping:
+    enabled: false
+    patience: 999
+    min_delta: 0.0
+    min_epochs: 0
