@@ -15,11 +15,11 @@ import numpy as np
 import torch
 from omegaconf import OmegaConf
 
-from mld_clean.config import parse_args
-from mld_clean.data.release_stats import ReleaseMotionStats
-from mld_clean.models.get_model import get_model
-from mld_clean.postprocess.foot_fix import fix_foot_sliding
-from mld_clean.utils.logger import create_logger
+from mld.config import parse_args
+from mld.data.release_stats import ReleaseMotionStats
+from mld.models.get_model import get_model
+from mld.postprocess.foot_fix import fix_foot_sliding
+from mld.utils.logger import create_logger
 
 
 def _torch_load_compat(path: str):

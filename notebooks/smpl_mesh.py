@@ -18,8 +18,8 @@ _ROOT = Path(__file__).resolve().parents[1]
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
-from mld_clean.data.release_stats import recover_root_rot_pos
-from mld_clean.utils.rotation_conversions import quaternion_to_matrix, rotation_6d_to_matrix
+from mld.data.release_stats import recover_root_rot_pos
+from mld.utils.rotation_conversions import quaternion_to_matrix, rotation_6d_to_matrix
 
 ROT_START = 4 + 21 * 3
 ROT_END = ROT_START + 21 * 6

@@ -62,9 +62,9 @@ def load_model(repo: Path, checkpoint: str | None = None, device: str | None = N
     from omegaconf import OmegaConf
 
     repo = prepare_repo(repo)
-    from mld_clean.config import get_module_config
-    from mld_clean.data.release_stats import ReleaseMotionStats
-    from mld_clean.models.get_model import get_model
+    from mld.config import get_module_config
+    from mld.data.release_stats import ReleaseMotionStats
+    from mld.models.get_model import get_model
 
     if device is None:
         device = "cuda:0" if torch.cuda.is_available() else "cpu"
@@ -156,7 +156,7 @@ def load_features(path: str | Path) -> np.ndarray:
 def features_to_joints(features: np.ndarray) -> np.ndarray:
     """Recover joint positions from raw, unnormalized HumanML features."""
     import torch
-    from mld_clean.data.release_stats import recover_from_ric
+    from mld.data.release_stats import recover_from_ric
 
     joints = recover_from_ric(torch.as_tensor(features, dtype=torch.float32), 22)
     return joints.detach().cpu().numpy()
@@ -365,7 +365,7 @@ def run_pair(
     result = raw_result
     if foot_fix:
         import torch
-        from mld_clean.postprocess.foot_fix import fix_foot_sliding
+        from mld.postprocess.foot_fix import fix_foot_sliding
 
         device = "cuda:0" if torch.cuda.is_available() else "cpu"
         result, _info = fix_foot_sliding(raw_result, device=device)

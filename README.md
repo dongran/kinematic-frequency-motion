@@ -42,7 +42,7 @@ curl -L -o motionclip_checkpoint/motionclip.pth.tar \
 
 ### How the networks were trained
 
-Training has four frozen models and one trained denoiser. The released config is `configs/dual_style_hht.yaml`.
+Training has four frozen models and one trained denoiser. The diffusion code is the `mld` package, and the IMF extractor is the `imf_extractor` package. The released config is `configs/dual_style_hht.yaml`; the module files it loads are in `configs/dual_style`.
 
 1. **Motion VAE.** An encoder–decoder transformer on raw HumanML-263 features: 9 layers, 4 heads, feed-forward size 1024, latent shape 7 × 256. It was trained on FineMotion at 20 Hz and stopped at epoch 599. Diffusion training does not update it.
 

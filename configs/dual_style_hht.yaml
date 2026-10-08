@@ -74,7 +74,7 @@ LOSS:
   LAMBDA_FREQ_BRANCH: 0.1
 
 model:
-  target: modules_clean_dualstyle
+  target: dual_style
   vae: true
   model_type: mld_hht_dual_style
   condition: 'text'
