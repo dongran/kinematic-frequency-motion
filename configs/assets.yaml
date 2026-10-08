@@ -1,0 +1,16 @@
+FOLDER: './outputs'
+
+TEST:
+  FOLDER: './outputs'
+
+DATASET:
+  SMPL_PATH: 'third_party/smpl'
+  TRANSFORM_PATH: 'third_party/transforms'
+  WORD_VERTILIZER_PATH: 'third_party/t2m/glove'
+  HUMANML3D:
+    ROOT: './data'
+    SPLIT_ROOT: './data'
+
+model:
+  clip_path: 'third_party/clip-vit-large-patch14'
+  t2m_path: 'third_party/t2m/t2m'
