@@ -121,15 +121,11 @@ SMPL motion (`poses` and `trans` in an `.npz`) is converted by the [HumanML3D](h
 
 A motion-capture BVH file is not read here. Retarget it to SMPL with [tempo-changing-music2motion](https://github.com/dongran/tempo-changing-music2motion), then run the two HumanML3D notebooks.
 
-### Generated motions
+### Generated motion
 
-These are stick figures written by the inference code. The first is a turning walk with a dance-kick style, coarse scale 2.5 and fine scale 10. The stair pair keeps one spatial scale, so the step up and the step down stay visible when the fine scale changes from 0 to 3. The coarse scale is 2.5 in both stair clips.
+Stair walk with an energetic style, coarse scale 2.5 and fine scale 3. The stick figure is rendered after the default foot-contact cleanup, so the feet stay planted on detected contacts. The camera keeps one scale for the whole clip, and the step up and the step down stay visible.
 
-![Turning walk with dance-kick style](asset/turning_walk.gif)
-
-![Stair walk, fine scale 0](asset/stair_fine0.gif)
-
-![Stair walk, fine scale 3](asset/stair_fine3.gif)
+![Stair walk, fine scale 3, after foot-contact cleanup](asset/stair_fine3.gif)
 
 ### Citation
 
