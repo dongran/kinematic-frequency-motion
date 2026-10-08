@@ -1,5 +1,7 @@
 # Learning Kinematic Frequency-Aware Disentanglement for Motion Style Transfer and Editing
 
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/dongran/kinematic-frequency-motion/blob/main/notebooks/dual_style_transfer_demo.ipynb)
+
 This repository accompanies **SIGGRAPH Asia 2026** and provides:
 
 - inference code for the dual-style latent diffusion model
@@ -111,7 +113,9 @@ The command writes two joint files:
 
 Foot cleanup is on by default and only moves joint positions. Pass `--no_foot_fix` to skip it.
 
-[Open the notebook in Colab](https://colab.research.google.com/github/dongran/kinematic-frequency-motion/blob/main/notebooks/dual_style_transfer_demo.ipynb). The first cell clones this repository and downloads the five weight files. In the example cell, `FOOT_FIX = False` shows the raw joints.
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/dongran/kinematic-frequency-motion/blob/main/notebooks/dual_style_transfer_demo.ipynb)
+
+The first cell clones this repository and downloads the five weight files. In the example cell, `FOOT_FIX = False` shows the raw joints.
 
 ### Your own motions
 
