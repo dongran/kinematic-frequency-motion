@@ -1,6 +1,6 @@
 # Training notes
 
-This repository releases the inference stack and the four checkpoints used together. It does not launch training by itself.
+This repository releases the inference stack and the five weight files used together. It does not launch training by itself. The README lists each file, its size, and the download URL.
 
 The released denoiser is a from-scratch FineMotion run, stopped at epoch 1999. It was trained with the other three checkpoints frozen:
 
