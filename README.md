@@ -123,9 +123,9 @@ A motion-capture BVH file is not read here. Retarget it to SMPL with [tempo-chan
 
 ### Generated motion
 
-Stair walk with an energetic style, coarse scale 2.5 and fine scale 3. The stick figure is rendered after the default foot-contact cleanup, so the feet stay planted on detected contacts. The camera keeps one scale for the whole clip, and the step up and the step down stay visible.
+Turning walk with a dance-kick style, coarse scale 2.5 and fine scale 10. The stick figure is rendered after the default foot-contact cleanup.
 
-![Stair walk, fine scale 3, after foot-contact cleanup](asset/stair_fine3.gif)
+![Turning walk with dance-kick style, after foot-contact cleanup](asset/turning_walk.gif)
 
 ### Citation
 
