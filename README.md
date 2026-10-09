@@ -13,7 +13,7 @@ This repository accompanies **SIGGRAPH Asia 2026** and provides:
 Paper figures and results are on the project page:
 [kinematic-frequency-motion](https://www.dr-lab.org/projects/kinematic-frequency-motion/).
 
-This repository runs the transfer and writes joint positions. It does not include SMPL mesh or Blender rendering. Training follows the four scripts below. The FineMotion clips themselves are not in this repository.
+This repository runs the transfer and writes joint positions. Mesh rendering is a separate Blender step and needs an SMPL body model, which is not included. Training follows the four scripts below. The FineMotion clips themselves are not in this repository.
 
 ### Weights
 
@@ -132,6 +132,23 @@ Turning walk with a dance-kick style, coarse scale 2.5 and fine scale 10.
 Stair walk with an energetic style, coarse scale 2.5 and fine scale 3. The camera keeps one scale for the whole clip, so the step up and the step down stay visible.
 
 ![Stair walk, fine scale 3, after foot-contact cleanup](asset/stair_fine3.gif)
+
+### Mesh rendering
+
+The same transfers can be drawn as an SMPL mesh in Blender. This step is not part of the Colab notebook. Install [Blender](https://www.blender.org/download/) yourself. The SMPL body model is not in this repository: download `SMPL_NEUTRAL.pkl` from the [SMPL website](https://smpl.is.tue.mpg.de/) and place it at `third_party/smpl/SMPL_NEUTRAL.pkl`.
+
+The renderer reads an `.npz` with `poses` and `trans`. `tools/motion_ik_smpl_bvh.py` can fit that file from a HumanML-263 clip or from the `joints` array written by the transfer, using [joints2smpl](https://github.com/Wangt-CN/Joints2SMPL). Then:
+
+```bash
+BLENDER_BIN=/path/to/blender SMPL_PATH=third_party/smpl \
+  bash scripts/render_mesh_blender.sh outputs/mesh/smpl_poses_mesh.npz outputs/mesh.mp4
+```
+
+These two clips are Blender renders of the transfers above.
+
+![Turning walk with dance-kick style, SMPL mesh](asset/dance_walk_mesh.gif)
+
+![Stair walk, fine scale 3, SMPL mesh](asset/stair_mesh.gif)
 
 ### Citation
 
