@@ -78,7 +78,7 @@ class Rotation2xyz:
                  jointstype, vertstrans, betas=None, beta=0,
                  glob_rot=None, get_rotations_back=False, **kwargs):
         if pose_rep == "xyz":
-            #摆正位置 only when visual
+            # Put the body upright. Used only for visualization.
             x = np.dot(x.permute(0,3,1,2).cpu().numpy(), self.trans_matrix)
             x = torch.tensor(x).to(self.device)
             x = x.permute(0,2,3,1)

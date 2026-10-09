@@ -139,7 +139,7 @@ class Dataset(torch.utils.data.Dataset):
             padded_tr[:, :3] = ret_tr
             ret = torch.cat((ret, padded_tr[:, None]), 1)
 
-        # 添加feats
+        # Append the feature vector.
         if pose_rep == "feats":
             ret = self._load_feat(ind, frame_ix)
             ret = to_torch(ret)

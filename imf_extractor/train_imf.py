@@ -14,8 +14,7 @@ from torch.utils.tensorboard import SummaryWriter
 import yaml
 from tqdm import tqdm
 
-# NOTE: 在当前独立仓库结构下，data / losses / models 目录位于项目根目录，
-# 因此直接以顶层包名导入即可。
+# data, losses, and models live in this package directory, so import them as top-level packages.
 from data.dataloader_factory import build_dataloader_by_type
 from losses.imf_losses import ImfLoss
 from models.imf_factory import build_imf_extractor
@@ -27,7 +26,7 @@ def parse_args():
     parser.add_argument(
         "--config",
         type=str,
-        # 在独立仓库中，配置文件默认位于 configs/ 目录
+        # Config files live in configs/.
         default="configs/imf_pose69_teacher.yaml",
         help="Path to YAML config file (relative to project root)",
     )
@@ -355,7 +354,7 @@ def main():
     args = parse_args()
     cfg = load_config(args.config)
 
-    # 设定随机种子
+    # Set the random seed.
     seed = int(cfg.get("experiment", {}).get("seed", 42))
     torch.manual_seed(seed)
     if torch.cuda.is_available():
@@ -364,7 +363,7 @@ def main():
     device = get_device(args.device)
     print(f"[IMF] Using device: {device}")
     if torch.cuda.is_available():
-        # 更稳定/更快的卷积算法选择（不会影响数值语义）
+        # Pick a stable, fast convolution algorithm. Numerics stay the same.
         torch.backends.cudnn.benchmark = True
 
     # ------------------------------ Data
@@ -376,11 +375,11 @@ def main():
     if args.num_workers is not None:
         ds_cfg["num_workers"] = int(args.num_workers)
     data_root = ds_cfg["root"]
-    # 以当前工作目录为基准解析相对路径
+    # Resolve relative paths from the current working directory.
     if not os.path.isabs(data_root):
         data_root = os.path.join(os.getcwd(), data_root)
 
-    # split 文件目录（可选）：支持 root/splits/*.txt 的新布局
+    # Optional split directory. Supports the root/splits/*.txt layout.
     split_dir = ds_cfg.get("split_dir", None)
     split_dir_abs = None
     if split_dir:
@@ -390,7 +389,7 @@ def main():
             cand = os.path.join(data_root, split_dir)
             split_dir_abs = cand if os.path.isdir(cand) else os.path.join(os.getcwd(), split_dir)
 
-    # IMF 标签目录（可选）：支持把 imfs3 放在独立目录（例如 finemotion_263_v4_memd_pose63/aligned3/imfs3）
+    # Optional IMF label directory, for example finemotion_263_v4_memd_pose63/aligned3/imfs3.
     imf_dir = ds_cfg.get("imf_dir", None)
     imf_dir_abs = None
     if imf_dir:
@@ -412,7 +411,7 @@ def main():
         else:
             sample_weight_path_abs = os.path.join(data_root, sample_weight_path)
 
-    # 训练集
+    # Training set.
     train_split = ds_cfg.get("split", "train")
     dataset_type = ds_cfg.get("type", None)
     train_loader = build_dataloader_by_type(
@@ -431,7 +430,7 @@ def main():
         unit_length=ds_cfg.get("unit_length", 4),
     )
 
-    # 验证集（如果存在 val.txt，则自动启用）
+    # Validation set. Enabled automatically when val.txt exists.
     val_loader = None
     val_split = ds_cfg.get("val_split", "val")
     try:
@@ -461,7 +460,7 @@ def main():
         print("[IMF] --no_val is set: disable validation.")
         val_loader = None
 
-    # 简要数据集信息（类似 MCM-LDM 的 dataset summary）
+    # Short dataset summary, in the same style as MCM-LDM.
     dataset = train_loader.dataset
     num_samples = len(dataset)
     num_batches = len(train_loader)
@@ -480,7 +479,7 @@ def main():
             f"batch_size={ds_cfg.get('val_batch_size', ds_cfg.get('batch_size', 64))}"
         )
 
-    # 抽一个 batch 看一下张量形状（来自训练集）
+    # Draw one training batch and print tensor shapes.
     sample_batch = None
     for b in train_loader:
         if b:
@@ -500,7 +499,7 @@ def main():
     freeze_plan = apply_freeze_plan(imf_extractor, train_cfg)
     expected_imf_dof = int(model_cfg.get("imf_dof", getattr(imf_extractor, "imfdof", 63)))
 
-    # 模型参数量统计
+    # Count model parameters.
     total_params = sum(p.numel() for p in imf_extractor.parameters())
     trainable_params = sum(p.numel() for p in imf_extractor.parameters() if p.requires_grad)
     print("\n=== IMFExtractor model summary ===")
@@ -595,7 +594,7 @@ def main():
         weight_decay=train_cfg.get("weight_decay", 0.0),
     )
 
-    # 学习率调度器（ReduceLROnPlateau）
+    # Learning-rate scheduler (ReduceLROnPlateau).
     scheduler_cfg = train_cfg.get("scheduler", {})
     use_scheduler = scheduler_cfg.get("type", None) == "reduce_on_plateau"
     scheduler = None
@@ -620,7 +619,7 @@ def main():
                 **plateau_kwargs,
             )
 
-    # Early stopping 配置
+    # Early-stopping settings.
     early_cfg = train_cfg.get("early_stopping", {})
     early_enabled = bool(early_cfg.get("enabled", False))
     early_patience = int(early_cfg.get("patience", 200))
@@ -638,7 +637,7 @@ def main():
     os.makedirs(log_dir, exist_ok=True)
     writer = SummaryWriter(log_dir=log_dir)
 
-    # 保存最终解析后的 config（已包含 CLI overrides），用于实验可复现与对比
+    # Save the resolved config, including CLI overrides, so the run can be reproduced.
     try:
         resolved_cfg_path = os.path.join(log_dir, "config_resolved.yaml")
         with open(resolved_cfg_path, "w") as f:
@@ -647,7 +646,7 @@ def main():
     except Exception as e:
         print(f"[IMF] WARNING: failed to save config_resolved.yaml: {e}")
 
-    # TensorBoard 记录一些 run 元信息（便于对比不同变体）
+    # Log a few run settings to TensorBoard so variants can be compared.
     try:
         model_variant = str(model_cfg.get("variant", "cnn"))
         writer.add_text("config/model_variant", model_variant, 0)
@@ -723,7 +722,7 @@ def main():
         epoch_batch_count = 0
         micro_step_in_epoch = 0
         optimizer.zero_grad(set_to_none=True)
-        # 使用 tqdm 显示当前 epoch 的 batch 进度
+        # Show batch progress for this epoch with tqdm.
         for batch_idx, batch in enumerate(
             tqdm(train_loader, desc=f"Epoch {epoch}/{epochs}", leave=False)
         ):
@@ -739,14 +738,14 @@ def main():
                     f"Target IMF dof mismatch: batch has {target_imfs.shape[2]}, model expects {expected_imf_dof}"
                 )
 
-            # 有效帧 mask（用于解决 batch 内 padding 的影响）
+            # Mask of valid frames, so padding inside the batch does not affect the loss.
             T_pad = motion.shape[1]
             time_mask = (
                 torch.arange(T_pad, device=device).unsqueeze(0) < lengths.unsqueeze(1)
             )  # [B, T_pad] bool
 
-            # padding 末帧延拓：将 motion 的 padding 部分填充为最后一帧，减少边界伪影对模型输出的影响
-            # （损失计算仍会用 time_mask 排除 padding 帧）
+            # Extend padding by repeating the last real frame, which reduces boundary artifacts.
+            # The loss still ignores padded frames through time_mask.
             last_idx = (lengths - 1).clamp(min=0).view(-1, 1, 1).expand(
                 motion.shape[0], 1, motion.shape[2]
             )
@@ -754,30 +753,30 @@ def main():
             motion = torch.where(time_mask.unsqueeze(-1), motion, last_motion.expand_as(motion))
 
             with torch.cuda.amp.autocast(enabled=use_amp, dtype=autocast_dtype):
-                # 预测 IMF
+                # Predict the IMFs.
                 pred_imfs_flat = imf_extractor.extract_imf_features(motion)  # [B, 3*63, T_pred]
                 target_flat = target_imfs.reshape(
                     target_imfs.shape[0], -1, target_imfs.shape[-1]
                 )  # [B, 3*63, T_gt]
 
-                # 与主工程 MCM-LDM 中一致：若预测长度与 GT 长度不完全相同，
-                # 在时间维上取二者的最小值进行对齐，避免 stride/下采样导致的 shape mismatch。
+                # Match MCM-LDM: if the prediction and the target differ in length,
+                # crop both to the shorter length so stride or downsampling cannot mismatch.
                 T_used = min(pred_imfs_flat.shape[-1], target_flat.shape[-1])
                 pred_imfs_used = pred_imfs_flat[..., :T_used]
                 target_imfs_used = target_flat[..., :T_used]
                 time_mask_used = time_mask[:, :T_used]
 
-                # 为 HHT / NaNGuard 提供更完整的调试上下文，方便日志查看
+                # Extra debug context for the HHT loss and the NaN guard.
                 debug_ctx = {
                     "loss": "imf_pretrain",
                     "split": ds_cfg.get("split", "train"),
                     "epoch": epoch,
                     "batch_idx": batch_idx,
-                    # 这里使用 lambda_ht 作为 ht_loss_weight 的近似权重，便于在日志中识别
+                    # Use lambda_ht as the logged Hilbert-loss weight.
                     "ht_loss_weight": loss_cfg.get("lambda_ht", 0.5),
                 }
 
-                # 对 loss 做 float32 计算（尤其是 EMD/HHT 相关项），避免 fp16 下溢/溢出。
+                # Compute the loss in float32, especially EMD and HHT, to avoid fp16 overflow.
                 with torch.cuda.amp.autocast(enabled=False):
                     total_loss, loss_dict = imf_loss_fn(
                         pred_imf=pred_imfs_used.float(),
@@ -823,7 +822,7 @@ def main():
                             print(f"    - {kk}: {vv_f}")
                     return
 
-            # 梯度累积：保持“有效 batch”变大但显存不爆
+            # Gradient accumulation: a larger effective batch without running out of memory.
             loss_scaled = total_loss / float(grad_accum_steps)
             scaler.scale(loss_scaled).backward()
             micro_step_in_epoch += 1
@@ -838,7 +837,7 @@ def main():
             running_loss += float(total_loss.item())
             epoch_batch_count += 1
 
-            # 统计本 epoch 内各项 loss 的和，方便在 epoch 结束时输出一次平均值
+            # Sum each loss term over the epoch, then print the average.
             if epoch_loss_sums is None:
                 epoch_loss_sums = {k: v.detach().clone() for k, v in loss_dict.items()}
             else:
@@ -850,7 +849,7 @@ def main():
                 break
 
         avg_loss = running_loss / max(epoch_batch_count, 1)
-        # 计算并打印本 epoch 平均 loss（各子项）
+        # Print the mean of each loss term for this epoch.
         if epoch_loss_sums is not None and epoch_batch_count > 0:
             epoch_loss_means = {
                 k: v / float(epoch_batch_count) for k, v in epoch_loss_sums.items()
@@ -862,7 +861,7 @@ def main():
                 f"[Epoch {epoch}/{epochs}] "
                 f"avg_total={avg_loss:.6f} | {loss_str}"
             )
-            # TensorBoard：训练集，每个 epoch 结束时记录一次
+            # TensorBoard: log the training losses once per epoch.
             writer.add_scalar("loss/epoch_avg", avg_loss, epoch)
             for k, v in epoch_loss_means.items():
                 writer.add_scalar(f"loss/{k}", v.item(), epoch)
@@ -936,14 +935,14 @@ def main():
                     torch.arange(T_pad, device=device).unsqueeze(0) < lengths.unsqueeze(1)
                 )  # [B, T_pad] bool
 
-                # 同训练：末帧延拓，减少 padding 影响
+                # Same as training: repeat the last real frame so padding does less harm.
                 last_idx = (lengths - 1).clamp(min=0).view(-1, 1, 1).expand(
                     motion.shape[0], 1, motion.shape[2]
                 )
                 last_motion = motion.gather(dim=1, index=last_idx)  # [B,1,263]
                 motion = torch.where(time_mask.unsqueeze(-1), motion, last_motion.expand_as(motion))
 
-                # 预测 IMF
+                # Predict the IMFs.
                 pred_imfs_flat = imf_extractor.extract_imf_features(
                     motion
                 )  # [B, 3*63, T_pred]
@@ -951,7 +950,7 @@ def main():
                     target_imfs.shape[0], -1, target_imfs.shape[-1]
                 )  # [B, 3*63, T_gt]
 
-                # 时间维对齐
+                # Align the time axis.
                 T_used = min(pred_imfs_flat.shape[-1], target_flat.shape[-1])
                 pred_imfs_used = pred_imfs_flat[..., :T_used]
                 target_imfs_used = target_flat[..., :T_used]
@@ -999,21 +998,21 @@ def main():
                     f"[Val   {epoch}/{epochs}] "
                     f"avg_total={val_avg_loss:.6f} | {val_loss_str}"
                 )
-                # TensorBoard：验证集，单独放到 val/ 前缀下
+                # TensorBoard: log validation losses under the val/ prefix.
                 writer.add_scalar("val/loss/epoch_avg", val_avg_loss, epoch)
                 for k, v in val_loss_means.items():
                     writer.add_scalar(f"val/loss/{k}", v.item(), epoch)
 
         # ------------------------------ Scheduler step & early stopping
-        # 仅在存在验证集时才基于 val loss 调整学习率 / 判断是否早停
+        # Step the learning rate and early stopping from the validation loss only when a validation set exists.
         if scheduler is not None and val_avg_loss is not None:
             scheduler.step(val_avg_loss)
 
-        # 记录当前学习率到 TensorBoard，方便观察调度行为（即便没有 scheduler 也能看到恒定 lr）
+        # Log the learning rate. A constant rate is still recorded when there is no scheduler.
         current_lr = optimizer.param_groups[0]["lr"]
         writer.add_scalar("lr", current_lr, epoch)
 
-        # Early stopping 判断
+        # Early-stopping check.
         if early_enabled and val_avg_loss is not None:
             if (best_val_loss is None) or (
                 val_avg_loss < best_val_loss - early_min_delta
@@ -1029,7 +1028,7 @@ def main():
                     f"best_val_loss={best_val_loss:.6f}, "
                     f"epochs_no_improve={epochs_no_improve}"
                 )
-                # 触发 early stopping 时，额外保存一次 checkpoint
+                # Save one more checkpoint when early stopping fires.
                 ckpt_path = os.path.join(ckpt_dir, f"imf_epoch_{epoch}_early_stop.pt")
                 torch.save(
                     {
@@ -1043,7 +1042,7 @@ def main():
                 print(f"  Saved early-stop checkpoint to {ckpt_path}")
                 break
 
-        # 保存 checkpoint
+        # Save the checkpoint.
         if epoch % ckpt_interval == 0 or epoch == epochs:
             ckpt_path = os.path.join(ckpt_dir, f"imf_epoch_{epoch}.pt")
             torch.save(

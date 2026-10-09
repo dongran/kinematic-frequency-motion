@@ -49,14 +49,14 @@ class HumanML3DDataModule(BASEDataModule):
         return recover_from_ric(features, self.njoints)
 
     def joints2feats(self, features):
-        # chuli (bs, frame, 22, 3)
+        # Convert joints to features. Input shape is (batch, frame, 22, 3).
 
-        # batch里面逐个动作处理
+        # Process one motion at a time inside the batch.
         feature_list = []
         for i in range(features.shape[0]):
             feature = extract_features(features[i,...])
 
-            # 复制最后一帧
+            # Repeat the last frame.
             last_frame = feature[-1].copy()
             feature = np.concatenate((feature, np.expand_dims(last_frame, axis=0)), axis=0)
 

@@ -3,20 +3,20 @@ from typing import Any, Dict, Optional, Sequence, Tuple
 import torch
 import torch.nn.functional as F
 
-# 与当前独立仓库结构对齐：IMF 提取模型在顶层的 models 包中
+# The IMF model lives in the top-level models package of this extractor.
 from models.imf_extractor import ht
 
 
 class ImfLoss:
-    """IMF 分解预训练的损失组合（L1 + EMD + HHT）。
+    """IMF pretraining loss: L1, EMD, and HHT.
 
-    该实现直接基于你当前工程中 `MLDLosses` 里的 IMF 部分逻辑做了轻量化改写，
-    只关注 IMFExtractor 预训练所需的几个指标：
+    This is a lighter form of the IMF terms in `MLDLosses`. It keeps only what
+    IMFExtractor pretraining needs:
 
-    - L1 分解对齐：预测 IMF vs. 离线 MEMD IMF
-    - EMD 均值约束：通道均值在 RMS 尺度下对齐
-    - EMD 极值密度约束：极值点密度（/ 每帧）对齐
-    - HHT 幅值 / 频率约束：对齐瞬时幅值与归一化频率
+    - L1 alignment of the predicted IMF against the offline MEMD IMF
+    - EMD mean: channel means match on an RMS scale
+    - EMD extrema: extrema density per frame matches
+    - HHT amplitude and frequency: instantaneous amplitude and normalized frequency match
     """
 
     def __init__(
@@ -319,13 +319,13 @@ class ImfLoss:
         group_specs: Optional[Sequence[Dict[str, Any]]] = None,
         current_group_name: Optional[str] = None,
     ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
-        """计算总损失及各子项。
+        """Total loss and its terms.
 
         Args:
-            pred_imf:   [B, C, T]  由 IMFExtractor 预测的 IMF（C = 3 * 63）
-            target_imf: [B, C, T]  离线 MEMD IMF 标签
-            time_mask:  [B, T]（bool/0-1）有效帧 mask，True 表示该帧有效。
-                        用于在 batch 内 padding 后，避免 padding 区域影响 loss。
+            pred_imf:   [B, C, T] IMF predicted by IMFExtractor (C = 3 * 63).
+            target_imf: [B, C, T] offline MEMD IMF target.
+            time_mask:  [B, T] valid-frame mask. True means the frame is real.
+                        After padding a batch, this keeps padding out of the loss.
         """
         assert pred_imf.shape == target_imf.shape, "pred_imf / target_imf shape mismatch"
 
@@ -341,11 +341,11 @@ class ImfLoss:
         losses: Dict[str, torch.Tensor] = {}
         total = torch.tensor(0.0, device=pred_imf.device)
 
-        # 1) L1 分解对齐
+        # 1) L1 decomposition alignment.
         if time_mask is None:
             l_decomp = F.l1_loss(pred_imf, target_imf)
         else:
-            # 只在有效帧上计算 L1，避免 padding 影响
+            # L1 on valid frames only, so padding does not count.
             eps = 1e-8
             pred_f = pred_imf.float()
             target_f = target_imf.float()
@@ -355,13 +355,13 @@ class ImfLoss:
         losses["imf_decomp"] = l_decomp
         total = total + self.lambda_decomp * l_decomp
 
-        # 2) EMD：均值与极值密度
+        # 2) EMD: mean and extrema density.
         l_emd_mean = self.compute_emd_mean_loss(pred_imf, target_imf, time_mask=time_mask)
         l_emd_ext = self.compute_emd_extremum_loss(pred_imf, target_imf, time_mask=time_mask)
         losses["imf_emd_mean"] = l_emd_mean
         losses["imf_emd_extremum"] = l_emd_ext
 
-        # 归一化权重
+        # Normalize the weights.
         s_emd = max(self.beta_emd_mean + self.beta_emd_ext, 1e-6)
         w_mean = self.beta_emd_mean / s_emd
         w_ext = self.beta_emd_ext / s_emd
@@ -369,7 +369,7 @@ class ImfLoss:
         losses["imf_emd"] = l_emd_total
         total = total + l_emd_total
 
-        # 3) HHT：幅值与频率
+        # 3) HHT: amplitude and frequency.
         if self.lambda_ht > 0.0 and (self.alpha_ht_amp + self.alpha_ht_freq) > 0.0:
             amp_loss, freq_loss = self.compute_hht_losses(
                 pred_imf,
@@ -632,13 +632,13 @@ class ImfLoss:
         target_imf: torch.Tensor,
         time_mask: Optional[torch.Tensor] = None,
     ) -> torch.Tensor:
-        """IMF 均值损失：在 RMS 尺度下对齐通道均值。"""
-        # 注意：该项在 fp16 autocast 下会出现数值下溢（例如 eps=1e-8 在 fp16 中会变成 0），
-        # 并且对低能量通道会放大误差，导致 Inf/NaN。这里强制用 float32 计算以保证稳定性。
+        """IMF mean loss: match channel means on an RMS scale."""
+        # fp16 autocast underflows here (eps=1e-8 becomes 0) and blows up low-energy
+        # channels into Inf/NaN. Force float32.
         eps = 1e-8
         pred_f = pred_imf.float()
         target_f = target_imf.float()
-        # 目标通道 RMS（沿时间）作为标尺（支持 mask：避免 padding 影响）
+        # Use the target channel RMS over time as the scale. The mask ignores padding.
         if time_mask is None:
             target_rms = torch.sqrt(torch.mean(target_f**2, dim=-1) + eps)  # [B, C]
             denom_t = None
@@ -669,7 +669,7 @@ class ImfLoss:
         target_imf: torch.Tensor,
         time_mask: Optional[torch.Tensor] = None,
     ) -> torch.Tensor:
-        """IMF 极值点损失：对齐“极值密度”（每帧数量）。"""
+        """IMF extrema loss: match extrema density, counted per frame."""
         batch_size, total_channels, seq_len = pred_imf.shape
 
         if time_mask is None:
@@ -680,12 +680,12 @@ class ImfLoss:
             target_density = target_ext / max(T, 1.0)
             return F.l1_loss(pred_density, target_density)
 
-        # 带 mask：只统计有效帧内的极值（padding 不参与）
+        # With a mask, count extrema only on valid frames.
         m = time_mask
         if m.dtype != torch.bool:
             m = m > 0
         m = m.to(device=pred_imf.device)
-        lengths = m.sum(dim=-1).clamp(min=3).float()  # [B]，至少保证有 diff/sign_change
+        lengths = m.sum(dim=-1).clamp(min=3).float()  # [B], long enough for a sign change
 
         # diff: [B,C,T-1] ; sign_changes: [B,C,T-2]
         diff_p = torch.diff(pred_imf, dim=-1)
@@ -693,7 +693,7 @@ class ImfLoss:
         sc_p = diff_p[..., 1:] * diff_p[..., :-1] < 0
         sc_t = diff_t[..., 1:] * diff_t[..., :-1] < 0
 
-        # 对 sign_changes 的位置做 mask：有效长度 L 时，sign_changes 有效索引范围 [0, L-3]，数量为 L-2
+        # Mask sign changes. For a valid length L, valid indices are [0, L-3], so there are L-2 of them.
         sc_len = max(seq_len - 2, 1)
         idx = torch.arange(sc_len, device=pred_imf.device)[None, :]  # [1, T-2]
         sc_mask = idx < (lengths - 2).clamp(min=0).long().unsqueeze(1)  # [B, T-2]
@@ -708,7 +708,7 @@ class ImfLoss:
 
     @staticmethod
     def count_extrema(tensor: torch.Tensor, dim: int = -1) -> torch.Tensor:
-        """统计给定维度上的极值点数量。"""
+        """Count extrema along one dimension."""
         if dim < 0:
             dim = tensor.dim() + dim
         diff = torch.diff(tensor, dim=dim)
@@ -718,7 +718,7 @@ class ImfLoss:
 
     @staticmethod
     def count_zero_crossings(tensor: torch.Tensor, dim: int = -1) -> torch.Tensor:
-        """统计给定维度上的过零点数量。"""
+        """Count zero crossings along one dimension."""
         if dim < 0:
             dim = tensor.dim() + dim
         prod = tensor[..., 1:] * tensor[..., :-1]
@@ -731,7 +731,7 @@ class ImfLoss:
         pred_imf: torch.Tensor,
         time_mask: Optional[torch.Tensor] = None,
     ) -> torch.Tensor:
-        """用 max-pool 近似上下包络，约束其局部均值趋近 0。"""
+        """Approximate the upper and lower envelopes with max-pooling and pull their local mean toward 0."""
         eps = 1e-8
         pred_f, mask_bc, _denom_t, _lengths = self._prepare_signal_and_mask(pred_imf, time_mask=time_mask)
         kernel = max(int(self.definition_env_pool_kernel), 1)
@@ -751,7 +751,7 @@ class ImfLoss:
         pred_imf: torch.Tensor,
         time_mask: Optional[torch.Tensor] = None,
     ) -> torch.Tensor:
-        """软近似 |N_ext - N_zero| <= 1 的 IMF 条件。"""
+        """Soft form of the IMF condition |N_ext - N_zero| <= 1."""
         eps = 1e-8
         pred_f, _mask_bc, _denom_t, lengths = self._prepare_signal_and_mask(pred_imf, time_mask=time_mask)
         softness = max(float(self.definition_softsign_scale), 1e-3)
@@ -789,7 +789,7 @@ class ImfLoss:
         pred_imf: torch.Tensor,
         time_mask: Optional[torch.Tensor] = None,
     ) -> torch.Tensor:
-        """全局零均值 guard，用于区分 DC 偏置与局部 envelope mean 误差。"""
+        """Global zero-mean guard. Separates a DC bias from a local envelope-mean error."""
         eps = 1e-8
         pred_f = pred_imf.float()
         scale = self._definition_rms_scale(pred_f, time_mask=time_mask).unsqueeze(-1)
@@ -811,7 +811,7 @@ class ImfLoss:
         debug_ctx: Optional[Dict] = None,
         time_mask: Optional[torch.Tensor] = None,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
-        """计算 HHT 相关损失（幅值与频率规范化）。"""
+        """HHT loss on normalized amplitude and frequency."""
         dt = self.dt
 
         base_ctx = debug_ctx if isinstance(debug_ctx, dict) else {}
@@ -820,8 +820,8 @@ class ImfLoss:
         target_ctx = dict(base_ctx)
         target_ctx["side"] = "target"
 
-        # padding 处理：为避免 batch 内 padding（补 0）对 FFT/Hilbert 的全局效应造成污染，
-        # 在计算 ht() 前，将无效帧延拓为“最后一个有效帧”的常数段，并在 loss 计算时只对有效帧做 mask。
+        # Padding is zeros, and that leaks into the FFT and the Hilbert transform.
+        # Before ht(), repeat the last valid frame across the padded tail, then mask the loss.
         pred_f = pred_imf.float()
         target_f = target_imf.float()
         time_mask_bool = None
@@ -843,16 +843,16 @@ class ImfLoss:
             pred_f = torch.where(mask_bc, pred_f, pred_last.expand(B, C, T))
             target_f = torch.where(mask_bc, target_f, target_last.expand(B, C, T))
 
-            # 供后续 masked 统计使用
+            # Kept for the masked statistics below.
             mask_bc = mask_bc.float()
             denom_t = lengths.float().unsqueeze(1)  # [B,1]
 
-        # Hilbert 变换得到幅值与瞬时频率
+        # Hilbert transform: instantaneous amplitude and frequency.
         pred_amp, pred_freq = ht(pred_f, dt, debug_ctx=pred_ctx)
         target_amp, target_freq = ht(target_f, dt, debug_ctx=target_ctx)
 
         eps = 1e-8
-        # 幅值：按目标 RMS（沿时间）归一
+        # Amplitude, normalized by the target RMS over time.
         if time_mask is None:
             target_rms = torch.sqrt(torch.mean(target_amp**2, dim=-1) + eps)  # [B, C]
         else:
@@ -866,7 +866,7 @@ class ImfLoss:
             denom = mask_bc.sum() * float(pred_amp_n.shape[1]) + eps
             amp_loss_norm = (((pred_amp_n - target_amp_n) ** 2) * mask_bc).sum() / denom
 
-        # 频率：Nyquist 归一 + 截断到 [0, f_nyq]
+        # Frequency, normalized by Nyquist and clipped to [0, f_nyq].
         f_nyq = max(self.f_nyquist, 1e-6)
         pred_f_n = torch.clamp(pred_freq, min=0.0, max=f_nyq) / f_nyq
         target_f_n = torch.clamp(target_freq, min=0.0, max=f_nyq) / f_nyq

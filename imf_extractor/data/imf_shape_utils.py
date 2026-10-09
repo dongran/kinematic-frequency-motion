@@ -6,9 +6,9 @@ import numpy as np
 
 
 def canonicalize_imfs(imfs: np.ndarray, expected_dof: Optional[int] = None) -> np.ndarray:
-    """将不同保存格式的 IMF 统一成 `[3, dof, T]`。
+    """Normalize stored IMF arrays to `[3, dof, T]`.
 
-    支持：
+    Supported layouts:
     - `[3, dof, T]`
     - `[3, T, dof]`
     - `[3, T, groups, 3]`

@@ -286,9 +286,9 @@ def train(cfg: dict[str, Any], *, device_override: str = "", resume_path: str = 
     label_root = Path(data_cfg["LABEL_ROOT"]).expanduser().resolve()
     split_root = Path(data_cfg["SPLIT_ROOT"]).expanduser().resolve()
     if not label_root.is_dir():
-        raise FileNotFoundError(f"label_root 不存在: {label_root}")
+        raise FileNotFoundError(f"label_root does not exist: {label_root}")
     if not split_root.is_dir():
-        raise FileNotFoundError(f"split_root 不存在: {split_root}")
+        raise FileNotFoundError(f"split_root does not exist: {split_root}")
 
     train_split = split_root / str(data_cfg.get("TRAIN_SPLIT", "train.txt"))
     val_split = split_root / str(data_cfg.get("VAL_SPLIT", "val.txt"))

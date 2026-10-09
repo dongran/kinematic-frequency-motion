@@ -73,7 +73,7 @@ class MOTIONCLIP(nn.Module):
         mixed_clip_loss, clip_losses = self.compute_clip_losses(batch)
 
         # mix and add clip losses
-        mixed_loss_with_clip = mixed_loss  # 去掉image和textloss
+        mixed_loss_with_clip = mixed_loss  # Drop the image and text losses.
         # mixed_loss_with_clip = mixed_loss + mixed_clip_loss  # this is the ultimate loss to optimize, combining ALL losses
         losses.update(clip_losses)
         losses["mixed_without_clip"] = mixed_loss.item()

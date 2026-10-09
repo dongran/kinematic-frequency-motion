@@ -35,7 +35,7 @@ def uniform_skeleton(positions, target_offset):
     new_joints = src_skel.forward_kinematics_np(quat_params, tgt_root_pos)
     return new_joints
 
-# 接收（frame, 22, 3）
+# Input positions have shape (frame, 22, 3).
 def extract_features(positions):
     feet_thre = 0.002
     fid_r, fid_l = [8, 11], [7, 10]

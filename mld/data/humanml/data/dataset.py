@@ -232,7 +232,7 @@
 # #########################
 
 
-# # # 最终使用的类
+# The class used below.
 
 # # class Text2MotionDatasetV2(data.Dataset):
 
@@ -325,7 +325,7 @@
 # #                             line_split = line.strip().split("#")
 # #                             caption = line_split[0]
 # #                             tokens = line_split[1].split(" ")
-# #                             #这里注释掉，去掉style token
+# #                             # Commented out so the style token is not added.
 # #                             # tokens = tokens+style_tokens
 # #                             f_tag = float(line_split[2])
 # #                             to_tag = float(line_split[3])
@@ -415,7 +415,7 @@
 # #         data = self.data_dict[self.name_list[idx]]
 # #         motion, motion_rot, m_length, text_list, style_text_list = data["motion"], data["motion_rot"],data["length"], data[
 # #             "text"], data["style_text"]
-# #         # 随机选一个caption
+# #         # Pick one caption at random.
 # #         # Randomly select a caption
 # #         #
 # #         text_data = random.choice(text_list)
@@ -473,7 +473,7 @@
 # #         # debug check nan
 # #         if np.any(np.isnan(motion)):
 # #             raise ValueError("nan in motion")
-# # #这里concat到一起了，style_text保存在
+# # # Concatenated here. style_text is kept in
 # #         return (
 # #             word_embeddings,
 # #             pos_one_hots,
@@ -488,7 +488,7 @@
 # #         # return caption, motion, m_length
 
 
-# # back储存
+# # Stored for later.
 # class Text2MotionDatasetV2(data.Dataset):
 
 #     def __init__(
@@ -575,7 +575,7 @@
 #                             line_split = line.strip().split("#")
 #                             caption = line_split[0]
 #                             tokens = line_split[1].split(" ")
-#                             #这里注释掉，去掉style token
+#                             # Commented out so the style token is not added.
 #                             # tokens = tokens+style_tokens
 #                             f_tag = float(line_split[2])
 #                             to_tag = float(line_split[3])
@@ -661,7 +661,7 @@
 #         data = self.data_dict[self.name_list[idx]]
 #         motion, m_length, text_list, style_text_list = data["motion"], data["length"], data[
 #             "text"], data["style_text"]
-#         # 随机选一个caption
+#         # Pick one caption at random.
 #         # Randomly select a caption
 #         #
 #         text_data = random.choice(text_list)
@@ -718,7 +718,7 @@
 #         # debug check nan
 #         if np.any(np.isnan(motion)):
 #             raise ValueError("nan in motion")
-# #这里concat到一起了，style_text保存在
+# # Concatenated here. style_text is kept in
 #         return (
 #             word_embeddings,
 #             pos_one_hots,
