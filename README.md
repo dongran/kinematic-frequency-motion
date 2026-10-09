@@ -46,9 +46,35 @@ curl -L -o motionclip_checkpoint/motionclip.pth.tar \
   https://www.dr-lab.org/projects/kinematic-frequency-motion/releases/checkpoints/motionclip_checkpoint/motionclip.pth.tar
 ```
 
+### Data preparation
+
+Training reads two products of the same motion. FineMotion, the set behind the released weights, will be released separately. The steps below are for a dataset of your own. HumanML-263 at 20 Hz is the feature layout used here.
+
+#### Fit the motion to SMPL
+
+Store each clip as an SMPL-24 `.npz`: `poses` is axis-angle with shape `(T, 24, 3)`, and `trans` is the root translation with shape `(T, 3)`. A motion that is already SMPL can be saved in that form. A BVH file, or another skeleton, is retargeted to SMPL first with [tempo-changing-music2motion](https://github.com/dongran/tempo-changing-music2motion). The paper unifies source captures at 30 Hz before the 20 Hz step below.
+
+#### HumanML-263 features
+
+Convert that SMPL motion into a raw HumanML-263 array, shape `[T, 263]`, at 20 Hz. Do not normalize it. The [HumanML3D](https://github.com/EricGuo5513/HumanML3D) notebooks `raw_pose_processing.ipynb` and `motion_representation.ipynb` do this from SMPL parameters: they recover the 22 joints, place the body on the floor, and write `new_joint_vecs`. Keep that array. Clips used for training are 40 to 196 frames at 20 Hz. The motion VAE and the denoiser read this array.
+
+#### MEMD and the three dataset frequencies
+
+The frequency labels come from the SMPL pose. Resample `poses` and `trans` to 20 Hz and stack a 69-D signal: root rotation, the 21 body joints, and root translation. Multivariate EMD decomposes that signal into mode-aligned intrinsic mode functions. Different clips produce different numbers of modes, so an IMF index is not yet a shared high, mid, or low band.
+
+For the dataset, drop the residual and keep modes whose amplitude-weighted frequency is at least 0.5 Hz. Take the three modes with the largest amplitude, sort them by frequency, and average each rank across the dataset. Those three numbers are the high, mid, and low frequencies of this motion set. Each clip is then aligned by assigning its valid modes to the nearest of those frequencies, without using the same mode twice. A clip with fewer than three valid modes is left out of the supervision set. This is the adaptive frequency-band alignment in the paper supplement.
+
+```bash
+python scripts/prepare_frequency_bands.py \
+  --smpl_dir data/smpl_npz \
+  --out_dir data/frequency_bands
+```
+
+`data/frequency_bands/aligned/*.npz` stores the three bands in high, mid, low order. Those files are the labels for the IMF extractor. A new motion set needs this pass before that extractor is trained. Each input take should be at least 70 frames at 20 Hz, because the 69-D signal needs more frames than channels. The released labels use 160 MEMD projection directions.
+
 ### Training
 
-Train on HumanML-263 features at 20 Hz. `configs/assets_finemotion.yaml` points at the FineMotion set used for the released weights. Those clips are not in this repository. One GPU is enough for each script. The diffusion code is `mld`. The IMF extractor code is `imf_extractor`. Layer sizes, learning rates, and loss weights are in the YAML file for each step.
+Train on the HumanML-263 features and the aligned bands from the section above. `configs/assets_finemotion.yaml` points at the FineMotion set used for the released weights. Those clips are not in this repository. One GPU is enough for each script. The diffusion code is `mld`. The IMF extractor code is `imf_extractor`. Layer sizes, learning rates, and loss weights are in the YAML file for each step.
 
 #### Step 1: Motion VAE
 
@@ -60,7 +86,7 @@ bash scripts/train_motion_vae.sh
 
 #### Step 2: IMF extractor
 
-Train the IMF extractor before the denoiser. It splits a motion into high, mid, and low bands, and the denoiser uses those bands to disentangle style from content. A different motion set needs its own extractor. The released `imf_extractor.pt` belongs with the released denoiser; keep the five files together when you use this checkpoint. Settings are in `configs/imf_pose69_teacher.yaml`.
+Train the IMF extractor before the denoiser, on the three aligned bands from data preparation. It learns to split a motion into those high, mid, and low bands, and the denoiser uses the bands to disentangle style from content. A different motion set needs its own bands and its own extractor. The released `imf_extractor.pt` belongs with the released denoiser; keep the five files together when you use this checkpoint. Settings are in `configs/imf_pose69_teacher.yaml`.
 
 ```bash
 bash scripts/train_imf_extractor.sh
@@ -112,11 +138,7 @@ The first cell of the notebook clones this repository and downloads the five wei
 
 ### Your own motions
 
-Use a raw HumanML3D feature, shape `[T, 263]`, 20 Hz. Do not normalize it yourself.
-
-SMPL motion (`poses` and `trans` in an `.npz`) is converted by the [HumanML3D](https://github.com/EricGuo5513/HumanML3D) notebooks `raw_pose_processing.ipynb` and then `motion_representation.ipynb`. Keep the `new_joint_vecs` array.
-
-A motion-capture BVH file is not read here. Retarget it to SMPL with [tempo-changing-music2motion](https://github.com/dongran/tempo-changing-music2motion), then run the two HumanML3D notebooks.
+Inference reads a raw HumanML-263 feature, shape `[T, 263]`, at 20 Hz. Do not normalize it yourself. Data preparation above is how that feature, and the three frequency bands, are built from an SMPL motion.
 
 ### Generated motions
 

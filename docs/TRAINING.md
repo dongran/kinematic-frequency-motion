@@ -1,6 +1,8 @@
 # Training
 
-The four training scripts are in the README. Motions are HumanML-263 features at 20 Hz. Layer sizes and loss weights are in each step's YAML file. Run the scripts in this order:
+Prepare HumanML-263 features and the three aligned frequency bands before training. The README section "Data preparation" is that procedure, including `scripts/prepare_frequency_bands.py`. FineMotion will be released separately; the same steps apply to another SMPL dataset.
+
+The four training scripts are in the README. Layer sizes and loss weights are in each step's YAML file. Run the scripts in this order:
 
 1. `bash scripts/train_motion_vae.sh`
 2. `bash scripts/train_imf_extractor.sh` — train this before the denoiser. A new motion set needs its own IMF extractor.
