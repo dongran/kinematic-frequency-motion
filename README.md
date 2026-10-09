@@ -17,7 +17,13 @@ This repository runs the transfer and writes joint positions. Mesh rendering is 
 
 ### Weights
 
-Five files, about 2.4 GB in total. Click a name to download that file into the path shown in the first column.
+The figure is the released model. Panel (a) is one transfer. Panel (b) is the IMF extractor that splits a motion into high, mid, and low bands. Five files, about 2.4 GB in total, cover the blocks below. Click a name to download that file into the path shown in the table.
+
+![Dual-style network](asset/model-all.jpg)
+
+The content motion is encoded by the motion VAE into a content latent, and its root path is a separate trajectory condition. The style motion is passed through the IMF extractor. High and mid bands become the fine-style condition. A summary of the low band is encoded by MotionCLIP into the coarse-style token. The dual-style denoiser is the network trained in the last step. The VAE decoder turns its latent back into a motion. The dashed box on the right is used only while training: the same frozen IMF extractor and the frequency losses supervise the generated motion. They are not another checkpoint.
+
+`contact_timing.pt` is a small frozen predictor of foot contact on the content motion. It conditions the trajectory branch. The denoiser also learns its own contact-timing encoder, and those weights are inside `dual_style_denoiser.ckpt`. The four training scripts below follow this split: steps 1–3 produce the frozen files, and step 4 trains the denoiser.
 
 | File | Size | What it is |
 | --- | --- | --- |
