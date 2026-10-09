@@ -30,7 +30,7 @@ The content motion is encoded by the motion VAE into a content latent, and its r
 | [`checkpoints/motion_vae.ckpt`](https://www.dr-lab.org/projects/kinematic-frequency-motion/releases/checkpoints/motion_vae.ckpt) | 929 MB | Motion VAE. Frozen while the denoiser trains. |
 | [`checkpoints/imf_extractor.pt`](https://www.dr-lab.org/projects/kinematic-frequency-motion/releases/checkpoints/imf_extractor.pt) | 91 MB | Three-band IMF extractor for this motion set. Train one before the denoiser, and keep it with these files. |
 | [`checkpoints/contact_timing.pt`](https://www.dr-lab.org/projects/kinematic-frequency-motion/releases/checkpoints/contact_timing.pt) | 1.0 MB | Content-side contact-timing predictor. Frozen. |
-| [`checkpoints/motionclip_checkpoint/motionclip.pth.tar`](https://www.dr-lab.org/projects/kinematic-frequency-motion/releases/checkpoints/motionclip_checkpoint/motionclip.pth.tar) | 217 MB | Pretrained [MotionCLIP from MCM-LDM](https://github.com/XingliangJin/MCM-LDM). Frozen coarse-style token. |
+| [`checkpoints/motionclip_checkpoint/motionclip.pth.tar`](https://www.dr-lab.org/projects/kinematic-frequency-motion/releases/checkpoints/motionclip_checkpoint/motionclip.pth.tar) | 217 MB | Trained [MotionCLIP from MCM-LDM](https://github.com/XingliangJin/MCM-LDM). It supplies the coarse style token. |
 | [`checkpoints/dual_style_denoiser.ckpt`](https://www.dr-lab.org/projects/kinematic-frequency-motion/releases/checkpoints/dual_style_denoiser.ckpt) | 1.03 GB | Dual-style denoiser trained with the released IMF extractor. |
 
 `checkpoints/SHA256SUMS` lists the SHA-256 of each file. CLIP ViT-B/32 is not one of these five files. The `clip` package downloads it on the first run.
@@ -76,7 +76,7 @@ bash scripts/train_contact_timing.sh
 
 #### MotionCLIP
 
-MotionCLIP is not trained here. The coarse-style token uses the pretrained checkpoint from [MCM-LDM](https://github.com/XingliangJin/MCM-LDM) ([project page](https://xingliangjin.github.io/MCM-LDM-Web/)). The file in this repository is that checkpoint. It stays frozen.
+The coarse-style token uses a trained MotionCLIP checkpoint from [MCM-LDM](https://github.com/XingliangJin/MCM-LDM) ([project page](https://xingliangjin.github.io/MCM-LDM-Web/)). This repository includes that file. For a finer-grained or custom token on your own data, retrain MotionCLIP.
 
 #### Step 4: Dual-style denoiser
 
