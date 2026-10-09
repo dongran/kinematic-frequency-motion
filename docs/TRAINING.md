@@ -1,6 +1,6 @@
 # Training
 
-Prepare HumanML-263 features and the three aligned frequency bands before training. The README section "Data preparation" is that procedure, including `scripts/prepare_frequency_bands.py`. FineMotion will be released separately; the same steps apply to another SMPL dataset.
+The README part "Train on your own data" is this procedure. Prepare HumanML-263 features and the three aligned frequency bands with `scripts/prepare_frequency_bands.py`, then run the four scripts below. FineMotion will be released separately; the same steps apply to another SMPL dataset. The released weights are the demonstration set.
 
 The four training scripts are in the README. Layer sizes and loss weights are in each step's YAML file. Run the scripts in this order:
 
