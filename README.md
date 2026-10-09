@@ -137,18 +137,16 @@ Stair walk with an energetic style, coarse scale 2.5 and fine scale 3. The camer
 
 The same transfers can be drawn as an SMPL mesh in Blender. This step is not part of the Colab notebook. Install [Blender](https://www.blender.org/download/) yourself. The SMPL body model is not in this repository: download `SMPL_NEUTRAL.pkl` from the [SMPL website](https://smpl.is.tue.mpg.de/) and place it at `third_party/smpl/SMPL_NEUTRAL.pkl`.
 
-The renderer reads an `.npz` with `poses` and `trans`. `tools/motion_ik_smpl_bvh.py` can fit that file from a HumanML-263 clip or from the `joints` array written by the transfer, using [joints2smpl](https://github.com/Wangt-CN/Joints2SMPL). Then:
+The renderer reads an `.npz` with `poses` and `trans`. `tools/motion_ik_smpl_bvh.py` can fit that file from a HumanML-263 clip or from the `joints` array written by the transfer, using [joints2smpl](https://github.com/wangsen1312/joints2smpl). Then:
 
 ```bash
 BLENDER_BIN=/path/to/blender SMPL_PATH=third_party/smpl \
   bash scripts/render_mesh_blender.sh outputs/mesh/smpl_poses_mesh.npz outputs/mesh.mp4
 ```
 
-These two clips are Blender renders of the transfers above.
+One example, the turning walk with a dance-kick style at coarse 2.5 and fine 10. Left to right: content in gray, style in blue, and the transfer in orange.
 
-![Turning walk with dance-kick style, SMPL mesh](asset/dance_walk_mesh.gif)
-
-![Stair walk, fine scale 3, SMPL mesh](asset/stair_mesh.gif)
+![Content, style, and transfer as SMPL meshes](asset/dance_walk_mesh.gif)
 
 ### Citation
 
