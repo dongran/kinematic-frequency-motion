@@ -17,17 +17,15 @@ This repository runs the transfer and writes joint positions. It does not includ
 
 ### Weights
 
-Five files, about 2.4 GB in total. Download them from:
-
-https://www.dr-lab.org/projects/kinematic-frequency-motion/releases/
+Five files, about 2.4 GB in total. Click a name to download that file into the path shown in the first column.
 
 | File | Size | What it is |
 | --- | --- | --- |
-| `checkpoints/motion_vae.ckpt` | 929 MB | Motion VAE, epoch 599. Latent shape 7 × 256. Frozen during diffusion training. |
-| `checkpoints/imf_extractor.pt` | 91 MB | Three-band IMF extractor. Frozen. Do not replace this file with a later extractor. |
-| `checkpoints/contact_timing.pt` | 1.0 MB | Content-side contact-timing predictor. Frozen. |
-| `checkpoints/motionclip_checkpoint/motionclip.pth.tar` | 217 MB | MotionCLIP. Frozen. It supplies the coarse style token. |
-| `checkpoints/dual_style_denoiser.ckpt` | 1.03 GB | Dual-style denoiser, epoch 1999. This is the network that was trained. |
+| [`checkpoints/motion_vae.ckpt`](https://www.dr-lab.org/projects/kinematic-frequency-motion/releases/checkpoints/motion_vae.ckpt) | 929 MB | Motion VAE, epoch 599. Latent shape 7 × 256. Frozen during diffusion training. |
+| [`checkpoints/imf_extractor.pt`](https://www.dr-lab.org/projects/kinematic-frequency-motion/releases/checkpoints/imf_extractor.pt) | 91 MB | Three-band IMF extractor. Frozen. Do not replace this file with a later extractor. |
+| [`checkpoints/contact_timing.pt`](https://www.dr-lab.org/projects/kinematic-frequency-motion/releases/checkpoints/contact_timing.pt) | 1.0 MB | Content-side contact-timing predictor. Frozen. |
+| [`checkpoints/motionclip_checkpoint/motionclip.pth.tar`](https://www.dr-lab.org/projects/kinematic-frequency-motion/releases/checkpoints/motionclip_checkpoint/motionclip.pth.tar) | 217 MB | MotionCLIP. Frozen. It supplies the coarse style token. |
+| [`checkpoints/dual_style_denoiser.ckpt`](https://www.dr-lab.org/projects/kinematic-frequency-motion/releases/checkpoints/dual_style_denoiser.ckpt) | 1.03 GB | Dual-style denoiser, epoch 1999. This is the network that was trained. |
 
 `checkpoints/SHA256SUMS` lists the SHA-256 of each file. CLIP ViT-B/32 is not one of these five files. The `clip` package downloads it on the first run.
 
@@ -113,9 +111,7 @@ The command writes two joint files:
 
 Foot cleanup is on by default and only moves joint positions. Pass `--no_foot_fix` to skip it.
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/dongran/kinematic-frequency-motion/blob/main/notebooks/kinematic_frequency_demo.ipynb)
-
-The first cell clones this repository and downloads the five weight files. In the example cell, `FOOT_FIX = False` shows the raw joints.
+The first cell of the notebook clones this repository and downloads the five weight files. In the example cell, `FOOT_FIX = False` shows the raw joints.
 
 ### Your own motions
 
