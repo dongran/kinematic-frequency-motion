@@ -17,7 +17,7 @@ import smplx
 import torch
 
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
+REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
@@ -30,11 +30,7 @@ if str(_TOOLS_DIR) not in sys.path:
     sys.path.insert(0, str(_TOOLS_DIR))
 
 from blender_cycles_prefs import default_render_device_token, normalize_render_device  # noqa: E402
-DEFAULT_SOTA_RENDER = (
-    Path("/home/randong/MCM-LDM/decoupling_contact/SOTAtest-HHT-Motion/tools")
-    / "render_finemotion_mesh_from_segids_mp4_smplh_hands.py"
-)
-DEFAULT_BLENDER_BIN = ROOT_DIR / "deps" / "blender-3.6.17-linux-x64" / "blender"
+DEFAULT_BLENDER_BIN = "blender"
 DEFAULT_BLENDER_SCRIPT = ROOT_DIR / "tools" / "blender_render_vertices_shadow.py"
 
 
@@ -165,8 +161,8 @@ def parse_args() -> argparse.Namespace:
     ap.add_argument(
         "--source_script",
         type=str,
-        default=str(DEFAULT_SOTA_RENDER),
-        help="Path to render_finemotion_mesh_from_segids_mp4_smplh_hands.py for helper reuse.",
+        default="",
+        help="Optional path to render_finemotion_mesh_from_segids_mp4_smplh_hands.py.",
     )
     ap.add_argument("--keep_frames", action="store_true", help="Keep rendered PNG frames.")
     ap.add_argument("--keep_assets", action="store_true", help="Keep intermediate vertices/faces/meta files.")

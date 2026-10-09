@@ -236,12 +236,8 @@ def main() -> int:
     ap.add_argument(
         "--source_script",
         type=Path,
-        default=REPO_ROOT
-        / "decoupling_contact"
-        / "SOTAtest-HHT-Motion"
-        / "tools"
-        / "render_finemotion_mesh_from_segids_mp4_smplh_hands.py",
-        help="FineMotion SMPLH helper that defines hand pose presets.",
+        default=None,
+        help="Required only for --body_model=smplh. Path to the SMPL-H hand-pose helper.",
     )
     ap.add_argument("--hand_preset", default="handpose_zip_4_400_tight65")
     ap.add_argument("--hand_preset_scale", type=float, default=1.0)

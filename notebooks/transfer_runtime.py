@@ -33,7 +33,7 @@ def find_repo_root(start: Path | None = None) -> Path:
         ).is_file():
             return candidate
     raise FileNotFoundError(
-        "Could not find the Dual-Style-HHT repository. "
+        "Could not find the kinematic-frequency-motion repository. "
         "Run this notebook from the repo, or set REPO_URL so the setup cell can clone it."
     )
 
