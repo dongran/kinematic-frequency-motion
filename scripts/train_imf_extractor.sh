@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Step 2. Train the three-band IMF extractor used with the dual-style denoiser.
+# Step 2. Train the three-band IMF extractor before the denoiser.
+# A new motion set needs its own extractor.
 # Settings are in configs/imf_pose69_teacher.yaml.
 set -euo pipefail
 cd "$(dirname "$0")/.."

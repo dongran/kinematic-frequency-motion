@@ -27,11 +27,11 @@ The content motion is encoded by the motion VAE into a content latent, and its r
 
 | File | Size | What it is |
 | --- | --- | --- |
-| [`checkpoints/motion_vae.ckpt`](https://www.dr-lab.org/projects/kinematic-frequency-motion/releases/checkpoints/motion_vae.ckpt) | 929 MB | Motion VAE, epoch 599. Latent shape 7 × 256. Frozen during diffusion training. |
-| [`checkpoints/imf_extractor.pt`](https://www.dr-lab.org/projects/kinematic-frequency-motion/releases/checkpoints/imf_extractor.pt) | 91 MB | Three-band IMF extractor trained with this denoiser. Keep the five files as one set. |
+| [`checkpoints/motion_vae.ckpt`](https://www.dr-lab.org/projects/kinematic-frequency-motion/releases/checkpoints/motion_vae.ckpt) | 929 MB | Motion VAE. Frozen while the denoiser trains. |
+| [`checkpoints/imf_extractor.pt`](https://www.dr-lab.org/projects/kinematic-frequency-motion/releases/checkpoints/imf_extractor.pt) | 91 MB | Three-band IMF extractor for this motion set. Train one before the denoiser, and keep it with these files. |
 | [`checkpoints/contact_timing.pt`](https://www.dr-lab.org/projects/kinematic-frequency-motion/releases/checkpoints/contact_timing.pt) | 1.0 MB | Content-side contact-timing predictor. Frozen. |
-| [`checkpoints/motionclip_checkpoint/motionclip.pth.tar`](https://www.dr-lab.org/projects/kinematic-frequency-motion/releases/checkpoints/motionclip_checkpoint/motionclip.pth.tar) | 217 MB | MotionCLIP. Frozen. It supplies the coarse style token. |
-| [`checkpoints/dual_style_denoiser.ckpt`](https://www.dr-lab.org/projects/kinematic-frequency-motion/releases/checkpoints/dual_style_denoiser.ckpt) | 1.03 GB | Dual-style denoiser, epoch 1999, trained with the released IMF extractor. |
+| [`checkpoints/motionclip_checkpoint/motionclip.pth.tar`](https://www.dr-lab.org/projects/kinematic-frequency-motion/releases/checkpoints/motionclip_checkpoint/motionclip.pth.tar) | 217 MB | Pretrained [MotionCLIP from MCM-LDM](https://github.com/XingliangJin/MCM-LDM). Frozen coarse-style token. |
+| [`checkpoints/dual_style_denoiser.ckpt`](https://www.dr-lab.org/projects/kinematic-frequency-motion/releases/checkpoints/dual_style_denoiser.ckpt) | 1.03 GB | Dual-style denoiser trained with the released IMF extractor. |
 
 `checkpoints/SHA256SUMS` lists the SHA-256 of each file. CLIP ViT-B/32 is not one of these five files. The `clip` package downloads it on the first run.
 
@@ -48,11 +48,11 @@ curl -L -o motionclip_checkpoint/motionclip.pth.tar \
 
 ### Training
 
-The released weights were trained in this order, on FineMotion motions stored as HumanML-263 features at 20 Hz. `configs/assets_finemotion.yaml` points at that set. One GPU is enough for each script. The diffusion code is `mld`. The IMF extractor code is `imf_extractor`.
+Train on HumanML-263 features at 20 Hz. `configs/assets_finemotion.yaml` points at the FineMotion set used for the released weights. Those clips are not in this repository. One GPU is enough for each script. The diffusion code is `mld`. The IMF extractor code is `imf_extractor`. Layer sizes, learning rates, and loss weights are in the YAML file for each step.
 
 #### Step 1: Motion VAE
 
-An encoder–decoder transformer: 9 layers, 4 heads, feed-forward size 1024, latent shape 7 × 256. AdamW, learning rate `1e-4`, batch size 128. The config runs for 1000 epochs. The released file is epoch 599, and it stays frozen after this step.
+Train the motion VAE, then keep it frozen. Settings are in `configs/motion_vae_finemotion.yaml`.
 
 ```bash
 bash scripts/train_motion_vae.sh
@@ -60,42 +60,33 @@ bash scripts/train_motion_vae.sh
 
 #### Step 2: IMF extractor
 
-The extractor writes three intrinsic mode functions at 20 Hz over 69 degrees of freedom: root rotation, the 63 body rotations, and root translation. Bands 0 and 1 are the fine style. Band 2 is the coarse band. The trajectory branch of the denoiser reads degrees of freedom 66–69.
-
-`imf_extractor.pt` is the extractor trained with the released denoiser. Keep it with the other four files. To train an extractor on your own data, use the script below.
+Train the IMF extractor before the denoiser. It splits a motion into high, mid, and low bands, and the denoiser uses those bands to disentangle style from content. A different motion set needs its own extractor. The released `imf_extractor.pt` belongs with the released denoiser; keep the five files together when you use this checkpoint. Settings are in `configs/imf_pose69_teacher.yaml`.
 
 ```bash
 bash scripts/train_imf_extractor.sh
 ```
 
-The loss weights are in `configs/imf_pose69_teacher.yaml`: decomposition `1.0`, EMD `0.5`, Hilbert amplitude and frequency `0.5` each inside the Hilbert term, plus a small body-63 temporal penalty.
-
 #### Step 3: Contact-timing predictor
 
-A small temporal network on hip contact, hidden size 64, 4 blocks, kernel size 5. It trains for 40 epochs, batch size 64, AdamW at `1e-4`. Each FineMotion clip needs a contact label `.npz` under the `DATA.LABEL_ROOT` path in `configs/contact_timing_finemotion.yaml`. The released file is the best checkpoint of this run. It stays frozen. MotionCLIP is also frozen; CLIP ViT-B/32 supplies its text and motion embedding.
+Train the foot-contact predictor on the content motion, then keep it frozen. Each clip needs a contact-label `.npz` under `DATA.LABEL_ROOT` in `configs/contact_timing_finemotion.yaml`.
 
 ```bash
 bash scripts/train_contact_timing.sh
 ```
 
+#### MotionCLIP
+
+MotionCLIP is not trained here. The coarse-style token uses the pretrained checkpoint from [MCM-LDM](https://github.com/XingliangJin/MCM-LDM) ([project page](https://xingliangjin.github.io/MCM-LDM-Web/)). The file in this repository is that checkpoint. It stays frozen.
+
 #### Step 4: Dual-style denoiser
 
-The motion VAE, the IMF extractor, the contact-timing predictor, and MotionCLIP stay frozen while the denoiser trains. The denoiser is a transformer encoder with the same 9 layers, 4 heads, and feed-forward size 1024. Fine style is injected from layer 6. The denoiser also learns its own contact-timing encoder, hidden size 128, output size 512, 2 blocks, kernel size 5. Those weights are inside `dual_style_denoiser.ckpt`.
-
-AdamW, learning rate `1e-4`, batch size 128, 2000 epochs. The released file is epoch 1999. Each condition is dropped with probability 0.25. The diffusion losses in `configs/dual_style_finemotion_scratch.yaml` are:
-
-- reconstruction, generation, and cross-reconstruction: `1.0`
-- IMF reconstruction: `0.1`
-- HHT amplitude and HHT frequency: `0.02` each
-- global frequency and branch frequency: `0.01` and `0.1`
-- KL: `1e-4`
-- latent: `1e-5`
+Train the denoiser with the motion VAE, the IMF extractor, the contact-timing predictor, and MotionCLIP frozen. Settings and loss weights are in `configs/dual_style_finemotion_scratch.yaml`.
 
 ```bash
 bash scripts/train_dual_style.sh
 ```
 
-Normalization uses `data/stats/Mean.npy` and `data/stats/Std.npy`. Sampling is separate from those loss weights. Inference uses DDIM with 50 steps. The paper protocol is global scale **2.5** and fine scale **1.5**.
+Normalization uses `data/stats/Mean.npy` and `data/stats/Std.npy`. Inference uses DDIM with 50 steps. The paper protocol is global scale **2.5** and fine scale **1.5**.
 
 ### Run a transfer
 

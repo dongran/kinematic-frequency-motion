@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
-# Step 1. Motion VAE on FineMotion HumanML-263.
-# AdamW, lr 1e-4, batch 128, latent 7 x 256. The config runs for 1000 epochs.
-# The released checkpoint is epoch 599.
+# Step 1. Motion VAE on FineMotion HumanML-263 at 20 Hz.
+# Settings are in configs/motion_vae_finemotion.yaml.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 python train.py \
