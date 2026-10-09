@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Step 4. Dual-style denoiser, trained from scratch.
+# Step 4. Train the dual-style denoiser with the released IMF extractor.
 # The motion VAE, IMF extractor, contact-timing predictor, and MotionCLIP stay frozen.
 # AdamW, lr 1e-4, batch 128, 2000 epochs. The released checkpoint is epoch 1999.
 set -euo pipefail
