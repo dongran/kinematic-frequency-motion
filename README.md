@@ -2,11 +2,7 @@
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/dongran/kinematic-frequency-motion/blob/main/notebooks/kinematic_frequency_demo.ipynb)
 
-This repository accompanies **SIGGRAPH Asia 2026**. It has two parts.
-
-**Demonstration.** Download the five released weights and run a transfer with this code, the Colab notebook, or a HumanML-263 clip of your own.
-
-**Train on your own data.** Prepare SMPL motions as HumanML-263 features and three frequency bands, then train the IMF extractor and the denoiser. FineMotion, the set used for the released weights, will be released separately.
+This repository accompanies **SIGGRAPH Asia 2026**.
 
 ![Teaser](asset/teaser.jpg)
 
@@ -19,11 +15,11 @@ The transfer writes joint positions. The Colab notebook clones this repository a
 
 ### Weights
 
-The figure is the released model. Panel (a) is one transfer. Panel (b) is the IMF extractor that splits a motion into high, mid, and low bands. Five files, about 2.4 GB in total, cover the blocks below. Click a name to download that file into the path shown in the table. Use the five files together.
+The figure is the released model. Panel (a) is one transfer. Panel (b) is the IMF extractor that splits a motion into high, mid, and low bands. Five files, about 2.4 GB in total, cover the blocks below. Use the five files together.
 
 ![Dual-style network](asset/model-all.jpg)
 
-The content motion is encoded by the motion VAE into a content latent, and its root path is a separate trajectory condition. The style motion is passed through the IMF extractor. High and mid bands become the fine-style condition. A summary of the low band is encoded by MotionCLIP into the coarse-style token. The dual-style denoiser produces a latent, and the VAE decoder turns that latent back into a motion. The dashed box on the right is training supervision drawn on the figure. The release contains the five files in the table.
+The content motion is encoded by the motion VAE into a content latent, and its root path is a separate trajectory condition. The style motion is passed through the IMF extractor. High and mid bands become the fine-style condition. A summary of the low band is encoded by MotionCLIP into the coarse-style token. The dual-style denoiser produces a latent, and the VAE decoder turns that latent back into a motion. The dashed box on the right is training supervision drawn on the figure.
 
 `contact_timing.pt` predicts foot contact on the content motion and conditions the trajectory branch. The denoiser also has its own contact-timing encoder inside `dual_style_denoiser.ckpt`.
 
@@ -35,7 +31,7 @@ The content motion is encoded by the motion VAE into a content latent, and its r
 | [`checkpoints/motionclip_checkpoint/motionclip.pth.tar`](https://www.dr-lab.org/projects/kinematic-frequency-motion/releases/checkpoints/motionclip_checkpoint/motionclip.pth.tar) | 217 MB | Trained [MotionCLIP from MCM-LDM](https://github.com/XingliangJin/MCM-LDM). It supplies the coarse style token. |
 | [`checkpoints/dual_style_denoiser.ckpt`](https://www.dr-lab.org/projects/kinematic-frequency-motion/releases/checkpoints/dual_style_denoiser.ckpt) | 1.03 GB | Dual-style denoiser paired with the released IMF extractor. |
 
-`checkpoints/SHA256SUMS` lists the SHA-256 of each file. The `clip` package downloads CLIP ViT-B/32 on the first run. That download is separate from the five files above.
+`checkpoints/SHA256SUMS` lists the SHA-256 of each file. The `clip` package downloads CLIP ViT-B/32 on the first run.
 
 ```bash
 mkdir -p checkpoints/motionclip_checkpoint
@@ -76,7 +72,7 @@ A test clip is a raw HumanML-263 feature, shape `[T, 263]`, at 20 Hz. Leave the 
 CONTENT_DIR=path/to/content STYLE_DIR=path/to/style bash scripts/run_demo.sh
 ```
 
-SMPL motion (`poses` and `trans` in an `.npz`) is converted by the [HumanML3D](https://github.com/EricGuo5513/HumanML3D) notebooks `raw_pose_processing.ipynb` and then `motion_representation.ipynb`. Keep the `new_joint_vecs` array. A BVH file is retargeted to SMPL with [tempo-changing-music2motion](https://github.com/dongran/tempo-changing-music2motion), then passed through those two notebooks. To train on a new set, use the next part. This section only runs the released weights.
+SMPL motion (`poses` and `trans` in an `.npz`) is converted by the [HumanML3D](https://github.com/EricGuo5513/HumanML3D) notebooks `raw_pose_processing.ipynb` and then `motion_representation.ipynb`. Keep the `new_joint_vecs` array. A BVH file is retargeted to SMPL with [tempo-changing-music2motion](https://github.com/dongran/tempo-changing-music2motion), then passed through those two notebooks.
 
 ### Generated motions
 
@@ -107,11 +103,11 @@ One example, the turning walk with a dance-kick style at coarse 2.5 and fine 10.
 
 ## Train on your own data
 
-This part prepares a dataset and trains the model on it. The released weights above are one trained set for the demonstration. A new motion set needs its own frequency bands, its own IMF extractor, and a denoiser trained with that extractor.
+FineMotion, the set used for the released weights, will be released separately. A new motion set needs its own frequency bands, its own IMF extractor, and a denoiser trained with that extractor.
 
 ### Data preparation
 
-Training reads two products of the same motion. HumanML-263 at 20 Hz is the feature layout.
+HumanML-263 at 20 Hz is the feature layout.
 
 #### Fit the motion to SMPL
 
@@ -137,7 +133,7 @@ python scripts/prepare_frequency_bands.py \
 
 ### Training
 
-Train on the HumanML-263 features and the aligned bands from the section above. `configs/assets_finemotion.yaml` points at the FineMotion set used for the released weights. One GPU is enough for each script. The diffusion code is `mld`. The IMF extractor code is `imf_extractor`. Layer sizes, learning rates, and loss weights are in the YAML file for each step. Steps 1–3 produce the files that stay fixed, and step 4 trains the denoiser.
+Train on the HumanML-263 features and the aligned frequency bands. `configs/assets_finemotion.yaml` points at the FineMotion set used for the released weights. One GPU is enough for each script. The diffusion code is `mld`. The IMF extractor code is `imf_extractor`. Layer sizes, learning rates, and loss weights are in the YAML file for each step. Steps 1–3 produce the files that stay fixed, and step 4 trains the denoiser.
 
 Normalization uses `data/stats/Mean.npy` and `data/stats/Std.npy`.
 
