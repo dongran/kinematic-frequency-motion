@@ -103,7 +103,7 @@ One example, the turning walk with a dance-kick style at coarse 2.5 and fine 10.
 
 ## Train on your own data
 
-FineMotion, the set used for the released weights, will be released separately. A new motion set needs its own frequency bands, its own IMF extractor, and a denoiser trained with that extractor.
+The released weights were trained on [FineMotion-Style](https://github.com/dongran/finemotion-style), a benchmark for fine-grained motion style transfer and editing. It brings together CG motion from several sources and covers four style categories: Impact, Strike, Balance, and Shake. A new motion set needs its own frequency bands, its own IMF extractor, and a denoiser trained with that extractor.
 
 ### Data preparation
 
@@ -133,7 +133,7 @@ python scripts/prepare_frequency_bands.py \
 
 ### Training
 
-Train on the HumanML-263 features and the aligned frequency bands. `configs/assets_finemotion.yaml` points at the FineMotion set used for the released weights. One GPU is enough for each script. The diffusion code is `mld`. The IMF extractor code is `imf_extractor`. Layer sizes, learning rates, and loss weights are in the YAML file for each step. Steps 1–3 produce the files that stay fixed, and step 4 trains the denoiser.
+Train on the HumanML-263 features and the aligned frequency bands. `configs/assets_finemotion.yaml` points at the [FineMotion-Style](https://github.com/dongran/finemotion-style) clips used for the released weights. One GPU is enough for each script. The diffusion code is `mld`. The IMF extractor code is `imf_extractor`. Layer sizes, learning rates, and loss weights are in the YAML file for each step. Steps 1–3 produce the files that stay fixed, and step 4 trains the denoiser.
 
 Normalization uses `data/stats/Mean.npy` and `data/stats/Std.npy`.
 

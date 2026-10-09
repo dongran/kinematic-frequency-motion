@@ -1,6 +1,6 @@
 # Training
 
-Prepare HumanML-263 features and the three aligned frequency bands with `scripts/prepare_frequency_bands.py`, then run the four scripts below. FineMotion will be released separately; the same steps apply to another SMPL dataset.
+The released weights were trained on [FineMotion-Style](https://github.com/dongran/finemotion-style). Prepare HumanML-263 features and the three aligned frequency bands with `scripts/prepare_frequency_bands.py`, then run the four scripts below. The same steps apply to another SMPL dataset.
 
 Layer sizes and loss weights are in each step's YAML file. Run the scripts in this order:
 
@@ -11,4 +11,4 @@ Layer sizes and loss weights are in each step's YAML file. Run the scripts in th
 
 The coarse-style token uses the trained MotionCLIP checkpoint from [MCM-LDM](https://github.com/XingliangJin/MCM-LDM). Retrain it for a custom token on your own data.
 
-FineMotion HumanML-263 clips are not included. `configs/assets_finemotion.yaml` is where their path is set.
+`configs/assets_finemotion.yaml` is where the FineMotion-Style path is set.

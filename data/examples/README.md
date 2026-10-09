@@ -2,7 +2,7 @@
 
 Each example is one content motion and one style motion. The demo script feeds the style motion to both the coarse and fine branches.
 
-Features are HumanML-263 arrays, shape `[T, 263]`, from the FineMotion representation used to train the released weights. The demo applies `data/stats/Mean.npy` and `data/stats/Std.npy`.
+Features are HumanML-263 arrays, shape `[T, 263]`, from [FineMotion-Style](https://github.com/dongran/finemotion-style), the representation used to train the released weights. The demo applies `data/stats/Mean.npy` and `data/stats/Std.npy`.
 
 | Example | Content | Style | Command |
 |---|---|---|---|
