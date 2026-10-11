@@ -1,13 +1,13 @@
 # Learning Kinematic Frequency-Aware Disentanglement for Motion Style Transfer and Editing
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/dongran/kinematic-frequency-motion/blob/main/notebooks/kinematic_frequency_demo.ipynb)
-[![Open in HF Spaces](https://huggingface.co/datasets/huggingface/badges/resolve/main/open-in-hf-spaces-sm.svg)](https://huggingface.co/spaces/randong/kinematic-frequency-motion)
+[![Live Demo](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Live%20Demo-yellow)](https://huggingface.co/spaces/randong/kinematic-frequency-motion)
 
 This repository accompanies **SIGGRAPH Asia 2026**.
 
 ![Teaser](asset/teaser.jpg)
 
-Paper figures and results are on the project page:
+The paper and related materials are on the project page:
 [kinematic-frequency-motion](https://www.dr-lab.org/projects/kinematic-frequency-motion/).
 
 ## Demonstration
