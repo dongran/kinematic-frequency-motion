@@ -1,6 +1,7 @@
 # Learning Kinematic Frequency-Aware Disentanglement for Motion Style Transfer and Editing
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/dongran/kinematic-frequency-motion/blob/main/notebooks/kinematic_frequency_demo.ipynb)
+[![Open in HF Spaces](https://huggingface.co/datasets/huggingface/badges/resolve/main/open-in-hf-spaces-sm.svg)](https://huggingface.co/spaces/randong/kinematic-frequency-motion)
 
 This repository accompanies **SIGGRAPH Asia 2026**.
 
@@ -11,7 +12,7 @@ Paper figures and results are on the project page:
 
 ## Demonstration
 
-The transfer writes joint positions. The Colab notebook clones this repository and downloads the five weight files.
+The transfer writes joint positions. The live demo runs the released model in the browser. The Colab notebook clones this repository and downloads the five weight files from Hugging Face.
 
 ### Weights
 
@@ -25,23 +26,18 @@ The content motion is encoded by the motion VAE into a content latent, and its r
 
 | File | Size | What it is |
 | --- | --- | --- |
-| [`checkpoints/motion_vae.ckpt`](https://www.dr-lab.org/projects/kinematic-frequency-motion/releases/checkpoints/motion_vae.ckpt) | 929 MB | Motion VAE. It encodes the content motion. |
-| [`checkpoints/imf_extractor.pt`](https://www.dr-lab.org/projects/kinematic-frequency-motion/releases/checkpoints/imf_extractor.pt) | 91 MB | Three-band IMF extractor paired with the released denoiser. |
-| [`checkpoints/contact_timing.pt`](https://www.dr-lab.org/projects/kinematic-frequency-motion/releases/checkpoints/contact_timing.pt) | 1.0 MB | Content-side contact-timing predictor. |
-| [`checkpoints/motionclip_checkpoint/motionclip.pth.tar`](https://www.dr-lab.org/projects/kinematic-frequency-motion/releases/checkpoints/motionclip_checkpoint/motionclip.pth.tar) | 217 MB | Trained [MotionCLIP from MCM-LDM](https://github.com/XingliangJin/MCM-LDM). It supplies the coarse style token. |
-| [`checkpoints/dual_style_denoiser.ckpt`](https://www.dr-lab.org/projects/kinematic-frequency-motion/releases/checkpoints/dual_style_denoiser.ckpt) | 1.03 GB | Dual-style denoiser paired with the released IMF extractor. |
+| [`motion_vae.ckpt`](https://huggingface.co/randong/kinematic-frequency-motion-weights/blob/main/motion_vae.ckpt) | 929 MB | Motion VAE. It encodes the content motion. |
+| [`imf_extractor.pt`](https://huggingface.co/randong/kinematic-frequency-motion-weights/blob/main/imf_extractor.pt) | 91 MB | Three-band IMF extractor paired with the released denoiser. |
+| [`contact_timing.pt`](https://huggingface.co/randong/kinematic-frequency-motion-weights/blob/main/contact_timing.pt) | 1.0 MB | Content-side contact-timing predictor. |
+| [`motionclip.pth.tar`](https://huggingface.co/randong/kinematic-frequency-motion-weights/blob/main/motionclip_checkpoint/motionclip.pth.tar) | 217 MB | Trained [MotionCLIP from MCM-LDM](https://github.com/XingliangJin/MCM-LDM). It supplies the coarse style token. |
+| [`dual_style_denoiser.ckpt`](https://huggingface.co/randong/kinematic-frequency-motion-weights/blob/main/dual_style_denoiser.ckpt) | 1.03 GB | Dual-style denoiser paired with the released IMF extractor. |
 
 `checkpoints/SHA256SUMS` lists the SHA-256 of each file. The `clip` package downloads CLIP ViT-B/32 on the first run.
 
+The five files are hosted at [`randong/kinematic-frequency-motion-weights`](https://huggingface.co/randong/kinematic-frequency-motion-weights).
+
 ```bash
-mkdir -p checkpoints/motionclip_checkpoint
-cd checkpoints
-curl -L -O https://www.dr-lab.org/projects/kinematic-frequency-motion/releases/checkpoints/motion_vae.ckpt
-curl -L -O https://www.dr-lab.org/projects/kinematic-frequency-motion/releases/checkpoints/imf_extractor.pt
-curl -L -O https://www.dr-lab.org/projects/kinematic-frequency-motion/releases/checkpoints/contact_timing.pt
-curl -L -O https://www.dr-lab.org/projects/kinematic-frequency-motion/releases/checkpoints/dual_style_denoiser.ckpt
-curl -L -o motionclip_checkpoint/motionclip.pth.tar \
-  https://www.dr-lab.org/projects/kinematic-frequency-motion/releases/checkpoints/motionclip_checkpoint/motionclip.pth.tar
+hf download randong/kinematic-frequency-motion-weights --local-dir checkpoints
 ```
 
 ### Run a transfer
