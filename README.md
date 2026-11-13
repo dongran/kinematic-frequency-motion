@@ -3,7 +3,7 @@
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/dongran/kinematic-frequency-motion/blob/main/notebooks/kinematic_frequency_demo.ipynb)
 [![Live Demo](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Live%20Demo-yellow)](https://huggingface.co/spaces/randong/kinematic-frequency-motion)
 
-This repository provides the official implementation of Learning Kinematic Frequency-Aware Disentanglement for Motion Style Transfer and Editing, accepted to SIGGRAPH Asia 2026 Technical Papers.
+This repository provides the official implementation of Learning Kinematic Frequency-Aware Disentanglement for Motion Style Transfer and Editing (SIGGRAPH Asia 2026 Technical Papers).
 
 ![Teaser](asset/teaser.jpg)
 
