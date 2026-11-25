@@ -1,14 +1,14 @@
 # Learning Kinematic Frequency-Aware Disentanglement for Motion Style Transfer and Editing
 
+[![Paper](https://img.shields.io/badge/Paper-ACM%20DL-blue)](https://dl.acm.org/doi/10.1145/3829340.3842231)
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/dongran/kinematic-frequency-motion/blob/main/notebooks/kinematic_frequency_demo.ipynb)
 [![Live Demo](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Live%20Demo-yellow)](https://huggingface.co/spaces/randong/kinematic-frequency-motion)
 
-This repository provides the official implementation of Learning Kinematic Frequency-Aware Disentanglement for Motion Style Transfer and Editing (SIGGRAPH Asia 2026 Technical Papers).
+This repository provides the official implementation of [Learning Kinematic Frequency-Aware Disentanglement for Motion Style Transfer and Editing](https://dl.acm.org/doi/10.1145/3829340.3842231) (SIGGRAPH Asia 2026).
 
 ![Teaser](asset/teaser.jpg)
 
-The paper and related materials are on the project page:
-[kinematic-frequency-motion](https://www.dr-lab.org/projects/kinematic-frequency-motion/).
+[Paper](https://dl.acm.org/doi/10.1145/3829340.3842231) · [Project page](https://www.dr-lab.org/projects/kinematic-frequency-motion/)
 
 ## Demonstration
 
@@ -175,8 +175,8 @@ bash scripts/train_dual_style.sh
 @inproceedings{dong2026kinematic,
   title={Learning Kinematic Frequency-Aware Disentanglement for Motion Style Transfer and Editing},
   author={Dong, Ran and Xie, Haoran and Yang, Xi},
-  booktitle={SIGGRAPH Asia 2026 Conference Papers},
-  year={2026},
-  note={to appear}
+  booktitle={Proceedings of the SIGGRAPH Asia 2026 Conference Papers},
+  pages={1--11},
+  year={2026}
 }
 ```
